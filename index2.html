@@ -1,0 +1,1477 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Hijri Calendar</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Lateef&display=swap');
+
+        :root {
+            --primary-color: #004d40; /* Dark Teal */
+            --secondary-color: #e0f2f7; /* Light Cyan */
+            --accent-color: #ffb300; /* Amber */
+            --text-color: #212121; /* Dark Grey */
+            --bg-color: #ffffff; /* White */
+            --border-color: #b2dfdb; /* Light Teal */
+            --event-color: #00796b; /* Cyan */
+            --important-date-color: #fbc02d; /* Dark Amber */
+            --reminder-color: #ef6c00; /* Orange */
+            --moon-phase-new: #bdbdbd; /* Grey */
+            --moon-phase-full: #fff9c4; /* Light Yellow */
+        }
+
+        body {
+            font-family: 'Amiri', serif;
+            line-height: 1.6;
+            color: var(--text-color);
+            background-color: var(--bg-color);
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        header {
+            background-color: var(--primary-color);
+            color: var(--secondary-color);
+            padding: 1rem;
+            text-align: center;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            position: relative;
+        }
+
+        header h1 {
+            margin: 0;
+            font-family: 'Lateef', cursive;
+            font-size: 2.5em;
+        }
+
+        nav {
+            display: flex;
+            justify-content: center;
+            background-color: var(--secondary-color);
+            padding: 0.5rem;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+            flex-wrap: wrap; /* Allow buttons to wrap on smaller screens */
+        }
+
+        nav button {
+            background: none;
+            border: none;
+            color: var(--primary-color);
+            padding: 0.5rem 1rem;
+            margin: 0.2rem 0.5rem; /* Adjusted margin for wrapping */
+            cursor: pointer;
+            font-family: 'Amiri', serif;
+            font-size: 1em;
+            transition: color 0.3s ease;
+        }
+
+        nav button:hover {
+            color: var(--accent-color);
+        }
+
+        main {
+            flex-grow: 1;
+            padding: 1rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .calendar-container {
+            width: 100%;
+            max-width: 900px;
+            background-color: var(--secondary-color);
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            margin-bottom: 1rem;
+        }
+
+        .calendar-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem;
+            background-color: var(--primary-color);
+            color: var(--secondary-color);
+        }
+
+        .calendar-header button {
+            background: none;
+            border: none;
+            color: var(--secondary-color);
+            font-size: 1.5em;
+            cursor: pointer;
+            transition: color 0.3s ease;
+        }
+
+        .calendar-header button:hover {
+            color: var(--accent-color);
+        }
+
+        .calendar-header h2 {
+            margin: 0;
+            font-size: 1.8em;
+            font-family: 'Lateef', cursive;
+            text-align: center; /* Center the month/year */
+            flex-grow: 1; /* Allow header text to take available space */
+        }
+
+        .calendar-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 1px;
+            background-color: var(--border-color);
+        }
+
+        .calendar-day-label {
+            background-color: var(--primary-color);
+            color: var(--secondary-color);
+            text-align: center;
+            padding: 0.5rem 0;
+            font-weight: bold;
+            font-size: 0.9em;
+        }
+
+        .calendar-day {
+            background-color: var(--bg-color);
+            padding: 0.5rem;
+            min-height: 100px;
+            position: relative;
+            border: 1px solid var(--border-color);
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .calendar-day:hover {
+            background-color: var(--e0f2f7);
+        }
+
+        .calendar-day.other-month {
+            background-color: #f5f5f5;
+            color: #9e9e9e;
+            cursor: default; /* No pointer for other months */
+        }
+
+        .day-numbers {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.8em;
+            margin-bottom: 0.3rem;
+        }
+
+        .day-numbers .hijri {
+            font-weight: bold;
+            color: var(--primary-color);
+        }
+
+        .day-numbers .gregorian {
+            color: var(--text-color);
+        }
+
+        .day-events {
+            font-size: 0.7em;
+            max-height: 60px;
+            overflow-y: auto;
+            flex-grow: 1; /* Allow events list to take remaining space */
+        }
+
+        .day-events::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        .day-events::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+
+        .day-events::-webkit-scrollbar-thumb {
+            background: #888;
+        }
+
+        .day-events::-webkit-scrollbar-thumb:hover {
+            background: #555;
+        }
+
+        .day-event-item {
+            margin-bottom: 3px;
+            padding: 2px 4px;
+            border-radius: 3px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            cursor: pointer; /* Make event items clickable */
+        }
+
+        .day-event-item.user-event {
+            background-color: var(--event-color);
+            color: white;
+        }
+
+        .day-event-item.important-date {
+            background-color: var(--important-date-color);
+            color: var(--text-color);
+        }
+
+        .moon-phase {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            width: 15px;
+            height: 15px;
+            border-radius: 50%;
+            background-color: var(--moon-phase-new); /* Default new moon */
+            border: 1px solid rgba(0,0,0,0.1);
+        }
+
+        /* Basic moon phase styling - needs more complex logic for accurate rendering */
+        .moon-phase.new-moon { background-color: var(--moon-phase-new); }
+        .moon-phase.waxing-crescent { background: radial-gradient(circle at 70% 50%, var(--moon-phase-full) 30%, var(--moon-phase-new) 30%); }
+        .moon-phase.first-quarter { background: linear-gradient(to left, var(--moon-phase-full) 50%, var(--moon-phase-new) 50%); }
+        .moon-phase.waxing-gibbous { background: radial-gradient(circle at 30% 50%, var(--moon-phase-new) 30%, var(--moon-phase-full) 30%); }
+        .moon-phase.full-moon { background-color: var(--moon-phase-full); }
+        .moon-phase.waning-gibbous { background: radial-gradient(circle at 70% 50%, var(--moon-phase-new) 30%, var(--moon-phase-full) 30%); }
+        .moon-phase.last-quarter { background: linear-gradient(to right, var(--moon-phase-full) 50%, var(--moon-phase-new) 50%); }
+        .moon-phase.waning-crescent { background: radial-gradient(circle at 30% 50%, var(--moon-phase-full) 30%, var(--moon-phase-new) 30%); }
+
+
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0, 0, 0, 0.4);
+            padding-top: 60px;
+        }
+
+        .modal-content {
+            background-color: var(--bg-color);
+            margin: 5% auto;
+            padding: 20px;
+            border-radius: 8px;
+            width: 90%;
+            max-width: 500px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+            position: relative;
+        }
+
+        .close-button {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .close-button:hover,
+        .close-button:focus {
+            color: #000;
+            text-decoration: none;
+        }
+
+        #eventModal h3 {
+            margin-top: 0;
+            color: var(--primary-color);
+        }
+
+        #eventModal label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: var(--primary-color);
+        }
+
+        #eventModal input[type="text"],
+        #eventModal textarea,
+        #eventModal input[type="date"] {
+            width: calc(100% - 22px);
+            padding: 10px;
+            margin-bottom: 15px;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            font-family: 'Amiri', serif;
+            font-size: 1em;
+        }
+
+        #eventModal textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+
+        #eventModal button {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-family: 'Amiri', serif;
+            font-size: 1em;
+            transition: background-color 0.3s ease;
+        }
+
+        #eventModal button:hover {
+            background-color: var(--accent-color);
+        }
+
+        #eventListModal .event-item {
+            border-bottom: 1px solid var(--border-color);
+            padding: 10px 0;
+            margin-bottom: 10px;
+        }
+
+        #eventListModal .event-item h4 {
+            margin: 0 0 5px 0;
+            color: var(--primary-color);
+        }
+
+        #eventListModal .event-item p {
+            margin: 0 0 5px 0;
+            font-size: 0.9em;
+        }
+
+        #eventListModal .event-item .event-date {
+            font-size: 0.8em;
+            color: #555;
+        }
+
+        #eventListModal .event-item button {
+            background-color: #e57373; /* Light Red */
+            color: white;
+            padding: 5px 10px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.8em;
+            margin-left: 5px;
+        }
+
+        #eventListModal .event-item button:hover {
+            background-color: #ef5350; /* Red */
+        }
+
+        #settingsModal label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: var(--primary-color);
+        }
+
+        #settingsModal input[type="number"] {
+            width: 80px;
+            padding: 8px;
+            margin-bottom: 15px;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            font-family: 'Amiri', serif;
+            font-size: 1em;
+        }
+
+        #settingsModal button {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-family: 'Amiri', serif;
+            font-size: 1em;
+            transition: background-color 0.3s ease;
+            margin-right: 10px;
+        }
+
+        #settingsModal button:hover {
+            background-color: var(--accent-color);
+        }
+
+        #backupRestoreModal input[type="file"] {
+            margin-bottom: 15px;
+        }
+
+        #backupRestoreModal button {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-family: 'Amiri', serif;
+            font-size: 1em;
+            transition: background-color 0.3s ease;
+            margin-right: 10px;
+        }
+
+        #backupRestoreModal button:hover {
+            background-color: var(--accent-color);
+        }
+
+        #searchModal input[type="text"] {
+            width: calc(100% - 22px);
+            padding: 10px;
+            margin-bottom: 15px;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            font-family: 'Amiri', serif;
+            font-size: 1em;
+        }
+
+        #searchModal .search-results .event-item {
+             border-bottom: 1px solid var(--border-color);
+            padding: 10px 0;
+            margin-bottom: 10px;
+        }
+
+         #searchModal .search-results .event-item h4 {
+            margin: 0 0 5px 0;
+            color: var(--primary-color);
+        }
+
+        #searchModal .search-results .event-item p {
+            margin: 0 0 5px 0;
+            font-size: 0.9em;
+        }
+
+        #searchModal .search-results .event-item .event-date {
+            font-size: 0.8em;
+            color: #555;
+        }
+
+
+        footer {
+            background-color: var(--primary-color);
+            color: var(--secondary-color);
+            text-align: center;
+            padding: 1rem;
+            margin-top: auto;
+            font-size: 0.9em;
+        }
+
+        @media (max-width: 768px) {
+            .calendar-grid {
+                grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+            }
+
+            .calendar-day {
+                min-height: 80px;
+            }
+
+            nav button {
+                padding: 0.5rem;
+                margin: 0.2rem;
+                font-size: 0.9em;
+            }
+
+            header h1 {
+                font-size: 2em;
+            }
+
+             .calendar-header h2 {
+                font-size: 1.5em;
+             }
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>My Hijri Calendar</h1>
+    </header>
+
+    <nav>
+        <button id="prevMonthBtn">Previous Month</button>
+        <button id="todayBtn">Today</button>
+        <button id="nextMonthBtn">Next Month</button>
+        <button id="addEventBtn">Add Event</button>
+        <button id="viewEventsBtn">View All Events</button>
+        <button id="searchEventsBtn">Search Events</button>
+        <button id="settingsBtn">Settings</button>
+        <button id="backupRestoreBtn">Backup/Restore</button>
+    </nav>
+
+    <main>
+        <div class="calendar-container">
+            <div class="calendar-header">
+                <button id="prevYearBtn">«</button>
+                <button id="prevMonthBtnHeader"><</button>
+                <h2 id="currentMonthYear"></h2>
+                <button id="nextMonthBtnHeader">></button>
+                <button id="nextYearBtn">»</button>
+            </div>
+            <div class="calendar-grid">
+                <div class="calendar-day-label">Sun</div>
+                <div class="calendar-day-label">Mon</div>
+                <div class="calendar-day-label">Tue</div>
+                <div class="calendar-day-label">Wed</div>
+                <div class="calendar-day-label">Thu</div>
+                <div class="calendar-day-label">Fri</div>
+                <div class="calendar-day-label">Sat</div>
+                <!-- Calendar days will be generated here -->
+            </div>
+        </div>
+    </main>
+
+    <footer>
+        <p>© <span id="currentYear"></span> My Hijri Calendar. Developed by Yasin Ullah.</p>
+    </footer>
+
+    <!-- Event Modal -->
+    <div id="eventModal" class="modal">
+        <div class="modal-content">
+            <span class="close-button">×</span>
+            <h3 id="eventModalTitle">Add New Event</h3>
+            <input type="hidden" id="eventId">
+            <label for="eventTitle">Event Title:</label>
+            <input type="text" id="eventTitle" required>
+
+            <label for="eventDate">Date:</label>
+            <input type="date" id="eventDate" required>
+
+            <label for="eventNotes">Notes:</label>
+            <textarea id="eventNotes"></textarea>
+
+            <button id="saveEventBtn">Save Event</button>
+            <button id="deleteEventBtn" style="display: none; background-color: #e57373;">Delete Event</button>
+        </div>
+    </div>
+
+    <!-- View Events Modal -->
+    <div id="viewEventsModal" class="modal">
+        <div class="modal-content">
+            <span class="close-button">×</span>
+            <h3>All Events</h3>
+            <div id="eventList">
+                <!-- Event list will be populated here -->
+            </div>
+        </div>
+    </div>
+
+     <!-- Search Events Modal -->
+    <div id="searchModal" class="modal">
+        <div class="modal-content">
+            <span class="close-button">×</span>
+            <h3>Search Events</h3>
+            <input type="text" id="searchQuery" placeholder="Enter title or notes...">
+            <div id="searchResults" class="search-results">
+                <!-- Search results will be populated here -->
+            </div>
+        </div>
+    </div>
+
+
+    <!-- Settings Modal -->
+    <div id="settingsModal" class="modal">
+        <div class="modal-content">
+            <span class="close-button">×</span>
+            <h3>Settings</h3>
+            <label for="hijriAdjustment">Hijri Date Adjustment (days):</label>
+            <input type="number" id="hijriAdjustment" value="0">
+            <p>Adjust the Hijri date forward (+) or backward (-) by this many days.</p>
+            <button id="saveSettingsBtn">Save Settings</button>
+        </div>
+    </div>
+
+    <!-- Backup/Restore Modal -->
+    <div id="backupRestoreModal" class="modal">
+        <div class="modal-content">
+            <span class="close-button">×</span>
+            <h3>Backup and Restore</h3>
+            <button id="backupBtn">Backup Data</button>
+            <hr>
+            <label for="restoreFile">Choose backup file:</label>
+            <input type="file" id="restoreFile" accept=".json">
+            <button id="restoreBtn">Restore Data</button>
+            <p style="font-size: 0.8em; color: #555;">Restoring will overwrite existing data.</p>
+        </div>
+    </div>
+
+
+    <script>
+        // Simple Hijri-Gregorian Conversion (Basic Implementation)
+        // This is a simplified conversion and may not be perfectly accurate for all dates
+        // due to the nature of the lunar calendar and sighting variations.
+        // For more accuracy, a robust library or external API would be needed,
+        // but this provides basic offline functionality.
+
+        const HIJRI_MONTHS = ["Muharram", "Safar", "Rabi' al-Awwal", "Rabi' al-Thani", "Jumada al-Awwal", "Jumada al-Thani", "Rajab", "Sha'ban", "Ramadan", "Shawwal", "Dhu al-Qi'dah", "Dhu al-Hijjah"];
+
+        function gregorianToHijri(gy, gm, gd) {
+            // Basic conversion based on a fixed offset.
+            // This is a simplification and will have inaccuracies.
+            // A more complex algorithm or data table is needed for precision.
+            // This offset is approximate for the current era.
+            const GREGORIAN_EPOCH = 1721425.5; // Julian day for 0001-01-01 Gregorian
+            const HIJRI_EPOCH = 1948439.5; // Julian day for 0001-01-01 Hijri (approx)
+
+            const jd = gregorianToJulian(gy, gm, gd);
+            const daysSinceHijriEpoch = jd - HIJRI_EPOCH;
+
+            // Approximate Hijri year
+            let hy = Math.floor(daysSinceHijriEpoch / 354.367);
+
+            // Calculate approximate Hijri month and day
+            let remainingDays = daysSinceHijriEpoch - (hy * 354);
+            let hm = Math.floor(remainingDays / 29.5);
+            let hd = Math.floor(remainingDays % 29.5) + 1;
+
+             // Adjust month and year if needed (very basic)
+            if (hd > 30) {
+                hm++;
+                hd -= 30;
+            }
+             if (hm > 11) {
+                hy++;
+                hm -= 12;
+             }
+             hm++; // Adjust to 1-indexed month
+
+            return { hy: hy, hm: hm, hd: hd };
+        }
+
+        function hijriToGregorian(hy, hm, hd) {
+             // Basic conversion based on a fixed offset.
+            // This is a simplification and will have inaccuracies.
+            // A more complex algorithm or data table is needed for precision.
+            const HIJRI_EPOCH = 1948439.5; // Julian day for 0001-01-01 Hijri (approx)
+
+            // Approximate Julian day
+            const jd = HIJRI_EPOCH + (hy - 1) * 354 + (hm - 1) * 29.5 + hd - 1;
+
+            return julianToGregorian(jd);
+        }
+
+        // Helper function to convert Gregorian date to Julian day
+        function gregorianToJulian(gy, gm, gd) {
+            let a = Math.floor((gm - 14) / 12);
+            let y = gy + 4800 + a;
+            let m = gm + 12 * a - 3;
+            let jdn = gd + Math.floor((153 * m + 2) / 5) + Math.floor(365 * y) + Math.floor(y / 4) - Math.floor(y / 100) + Math.floor(y / 400) - 32045;
+            return jdn;
+        }
+
+        // Helper function to convert Julian day to Gregorian date
+        function julianToGregorian(jd) {
+            let j = Math.floor(jd + 0.5) + 32044;
+            let g = Math.floor(j / 146097);
+            let dg = Math.floor(j % 146097);
+            let c = Math.floor(((dg / 36524) + 1) * 3 / 4);
+            let gc = dg - Math.floor(36524 * c / 4);
+            let y = Math.floor(((gc / 1461) + 1) * 3 / 4);
+            let yc = gc - Math.floor(1461 * y / 4);
+            let m = Math.floor(((yc / 30.6001) + 1));
+            let d = yc - Math.floor(30.6001 * m);
+
+            if (m > 13) {
+                y = y + 1;
+                m = m - 12;
+            }
+
+            return { gy: y - 4800, gm: m - 1, gd: d }; // gm is 0-indexed
+        }
+
+
+        const DB_NAME = 'MyHijriCalendarDB';
+        const DB_VERSION = 2; // Increment version for new object store
+        const EVENTS_STORE = 'events';
+        const SETTINGS_STORE = 'settings';
+        const IMPORTANT_DATES_STORE = 'importantDates';
+
+        let db;
+        let currentGregorianDate = new Date();
+        let hijriAdjustment = 0; // Default adjustment
+
+        // Pre-loaded Important Islamic Dates (Gregorian)
+        // This is a basic set. More can be added.
+        // Format: { title: "Event Title", date: "YYYY-MM-DD" }
+        const preloadedImportantDates = [
+            { title: "Islamic New Year 1445", date: "2023-07-19" }, // 1 Muharram 1445
+            { title: "Ashura 1445", date: "2023-07-28" }, // 10 Muharram 1445
+            { title: "Mawlid al-Nabi 1445", date: "2023-09-27" }, // 12 Rabi' al-Awwal 1445
+            { title: "Start of Ramadan 1445 (Approx)", date: "2024-03-11" }, // Approx 1 Ramadan 1445 (depends on sighting)
+            { title: "Laylat al-Qadr 1445 (Approx)", date: "2024-04-06" }, // Approx 27 Ramadan 1445 (depends on sighting)
+            { title: "Eid al-Fitr 1445 (Approx)", date: "2024-04-10" }, // Approx 1 Shawwal 1445 (depends on sighting)
+            { title: "Day of Arafah 1445 (Approx)", date: "2024-06-15" }, // Approx 9 Dhu al-Hijjah 1445 (depends on sighting)
+            { title: "Eid al-Adha 1445 (Approx)", date: "2024-06-16" }, // Approx 10 Dhu al-Hijjah 1445 (depends on sighting)
+             { title: "Islamic New Year 1446", date: "2024-07-07" }, // 1 Muharram 1446
+            { title: "Ashura 1446", date: "2024-07-16" }, // 10 Muharram 1446
+             { title: "Mawlid al-Nabi 1446", date: "2024-09-15" }, // 12 Rabi' al-Awwal 1446
+        ];
+
+
+        // IndexedDB Initialization
+        function openDatabase() {
+            return new Promise((resolve, reject) => {
+                const request = indexedDB.open(DB_NAME, DB_VERSION);
+
+                request.onupgradeneeded = (event) => {
+                    db = event.target.result;
+                    if (!db.objectStoreNames.contains(EVENTS_STORE)) {
+                        db.createObjectStore(EVENTS_STORE, { keyPath: 'id', autoIncrement: true });
+                    }
+                    if (!db.objectStoreNames.contains(SETTINGS_STORE)) {
+                        db.createObjectStore(SETTINGS_STORE, { keyPath: 'key' });
+                    }
+                     if (!db.objectStoreNames.contains(IMPORTANT_DATES_STORE)) {
+                        db.createObjectStore(IMPORTANT_DATES_STORE, { keyPath: 'date' });
+                    }
+                };
+
+                request.onsuccess = (event) => {
+                    db = event.target.result;
+                    console.log('Database opened successfully');
+                    loadSettings().then(loadImportantDates).then(renderCalendar);
+                    resolve(db);
+                };
+
+                request.onerror = (event) => {
+                    console.error('Database error:', event.target.errorCode);
+                    reject('Database error');
+                };
+            });
+        }
+
+        // Settings Management
+        async function loadSettings() {
+            return new Promise((resolve) => {
+                const transaction = db.transaction([SETTINGS_STORE], 'readonly');
+                const store = transaction.objectStore(SETTINGS_STORE);
+                const request = store.get('hijriAdjustment');
+
+                request.onsuccess = (event) => {
+                    if (event.target.result) {
+                        hijriAdjustment = event.target.result.value;
+                        document.getElementById('hijriAdjustment').value = hijriAdjustment;
+                    }
+                    resolve();
+                };
+
+                request.onerror = (event) => {
+                    console.error('Error loading settings:', event.target.errorCode);
+                    resolve(); // Resolve even on error to continue app loading
+                };
+            });
+        }
+
+        async function saveSettings() {
+            const adjustment = parseInt(document.getElementById('hijriAdjustment').value, 10);
+            if (isNaN(adjustment)) {
+                alert('Please enter a valid number for adjustment.');
+                return;
+            }
+            hijriAdjustment = adjustment;
+
+            return new Promise((resolve, reject) => {
+                const transaction = db.transaction([SETTINGS_STORE], 'readwrite');
+                const store = transaction.objectStore(SETTINGS_STORE);
+                const request = store.put({ key: 'hijriAdjustment', value: hijriAdjustment });
+
+                request.onsuccess = () => {
+                    console.log('Settings saved');
+                    renderCalendar(); // Re-render calendar with new adjustment
+                    resolve();
+                };
+
+                request.onerror = (event) => {
+                    console.error('Error saving settings:', event.target.errorCode);
+                    reject('Error saving settings');
+                };
+            });
+        }
+
+        // Important Dates Management
+        async function loadImportantDates() {
+             return new Promise((resolve) => {
+                const transaction = db.transaction([IMPORTANT_DATES_STORE], 'readwrite'); // Use readwrite to add defaults
+                const store = transaction.objectStore(IMPORTANT_DATES_STORE);
+                const request = store.getAll();
+
+                request.onsuccess = (event) => {
+                    const storedDates = event.target.result;
+                    if (storedDates.length === 0) {
+                        // Add preloaded dates if the store is empty
+                        preloadedImportantDates.forEach(date => {
+                            store.add(date);
+                        });
+                         console.log('Preloaded important dates added.');
+                         resolve(preloadedImportantDates); // Resolve with preloaded dates
+                    } else {
+                         console.log('Important dates loaded.');
+                         resolve(storedDates); // Resolve with stored dates
+                    }
+                };
+
+                request.onerror = (event) => {
+                    console.error('Error loading important dates:', event.target.errorCode);
+                    resolve([]); // Resolve with empty array on error
+                };
+            });
+        }
+
+        // Event Management
+        async function addEvent(event) {
+            return new Promise((resolve, reject) => {
+                const transaction = db.transaction([EVENTS_STORE], 'readwrite');
+                const store = transaction.objectStore(EVENTS_STORE);
+                const request = store.add(event);
+
+                request.onsuccess = () => {
+                    console.log('Event added:', event);
+                    renderCalendar();
+                    resolve();
+                };
+
+                request.onerror = (event) => {
+                    console.error('Error adding event:', event.target.errorCode);
+                    reject('Error adding event');
+                };
+            });
+        }
+
+        async function updateEvent(event) {
+             return new Promise((resolve, reject) => {
+                const transaction = db.transaction([EVENTS_STORE], 'readwrite');
+                const store = transaction.objectStore(EVENTS_STORE);
+                const request = store.put(event);
+
+                request.onsuccess = () => {
+                    console.log('Event updated:', event);
+                    renderCalendar();
+                    resolve();
+                };
+
+                request.onerror = (event) => {
+                    console.error('Error updating event:', event.target.errorCode);
+                    reject('Error updating event');
+                };
+            });
+        }
+
+        async function deleteEvent(eventId) {
+             return new Promise((resolve, reject) => {
+                const transaction = db.transaction([EVENTS_STORE], 'readwrite');
+                const store = transaction.objectStore(EVENTS_STORE);
+                const request = store.delete(eventId);
+
+                request.onsuccess = () => {
+                    console.log('Event deleted:', eventId);
+                    renderCalendar();
+                    resolve();
+                };
+
+                request.onerror = (event) => {
+                    console.error('Error deleting event:', event.target.errorCode);
+                    reject('Error deleting event');
+                };
+            });
+        }
+
+
+        async function getEventsForMonth(year, month) {
+            return new Promise((resolve, reject) => {
+                const transaction = db.transaction([EVENTS_STORE], 'readonly');
+                const store = transaction.objectStore(EVENTS_STORE);
+                const request = store.getAll();
+
+                request.onsuccess = (event) => {
+                    const allEvents = event.target.result;
+                    const filteredEvents = allEvents.filter(event => {
+                        const eventDate = new Date(event.date);
+                        return eventDate.getFullYear() === year && eventDate.getMonth() === month;
+                    });
+                    resolve(filteredEvents);
+                };
+
+                request.onerror = (event) => {
+                    console.error('Error fetching events:', event.target.errorCode);
+                    reject('Error fetching events');
+                };
+            });
+        }
+
+         async function getAllEvents() {
+             return new Promise((resolve, reject) => {
+                const transaction = db.transaction([EVENTS_STORE], 'readonly');
+                const store = transaction.objectStore(EVENTS_STORE);
+                const request = store.getAll();
+
+                request.onsuccess = (event) => {
+                    resolve(event.target.result);
+                };
+
+                request.onerror = (event) => {
+                    console.error('Error fetching all events:', event.target.errorCode);
+                    reject('Error fetching all events');
+                };
+            });
+        }
+
+         async function searchEvents(query) {
+             return new Promise((resolve, reject) => {
+                const transaction = db.transaction([EVENTS_STORE], 'readonly');
+                const store = transaction.objectStore(EVENTS_STORE);
+                const request = store.getAll();
+
+                request.onsuccess = (event) => {
+                    const allEvents = event.target.result;
+                    const lowerQuery = query.toLowerCase();
+                    const results = allEvents.filter(event =>
+                        event.title.toLowerCase().includes(lowerQuery) ||
+                        event.notes.toLowerCase().includes(lowerQuery)
+                    );
+                    resolve(results);
+                };
+
+                request.onerror = (event) => {
+                    console.error('Error searching events:', event.target.errorCode);
+                    reject('Error searching events');
+                };
+            });
+        }
+
+
+        // Backup and Restore
+        async function backupData() {
+            try {
+                const allEvents = await getAllEvents();
+                const settings = await new Promise((resolve, reject) => {
+                     const transaction = db.transaction([SETTINGS_STORE], 'readonly');
+                     const store = transaction.objectStore(SETTINGS_STORE);
+                     const request = store.get('hijriAdjustment');
+                     request.onsuccess = (event) => resolve(event.target.result);
+                     request.onerror = (event) => reject(event.target.errorCode);
+                });
+                 const importantDates = await loadImportantDates(); // Load important dates for backup
+
+                const backupData = {
+                    events: allEvents,
+                    settings: settings,
+                    importantDates: importantDates,
+                    timestamp: new Date().toISOString()
+                };
+
+                const blob = new Blob([JSON.stringify(backupData, null, 2)], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `my_hijri_calendar_backup_${new Date().toISOString().split('T')[0]}.json`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+                console.log('Backup created successfully.');
+            } catch (error) {
+                console.error('Backup failed:', error);
+                alert('Backup failed. See console for details.');
+            }
+        }
+
+        async function restoreData(file) {
+            if (!file) {
+                alert('Please select a backup file.');
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = async (event) => {
+                try {
+                    const backupData = JSON.parse(event.target.result);
+
+                    if (!backupData || !Array.isArray(backupData.events) || !Array.isArray(backupData.importantDates) || typeof backupData.settings !== 'object') {
+                        alert('Invalid backup file format.');
+                        return;
+                    }
+
+                    // Clear existing data
+                    await clearObjectStore(EVENTS_STORE);
+                    await clearObjectStore(SETTINGS_STORE);
+                    await clearObjectStore(IMPORTANT_DATES_STORE);
+
+                    // Restore data
+                    await addDataToObjectStore(EVENTS_STORE, backupData.events);
+                    if (backupData.settings) {
+                         await addDataToObjectStore(SETTINGS_STORE, [backupData.settings]);
+                    }
+                     await addDataToObjectStore(IMPORTANT_DATES_STORE, backupData.importantDates);
+
+
+                    console.log('Data restored successfully.');
+                    alert('Data restored successfully. The app will now reload.');
+                    window.location.reload(); // Reload to apply settings and re-render
+                } catch (error) {
+                    console.error('Restore failed:', error);
+                    alert('Restore failed. See console for details.');
+                }
+            };
+            reader.onerror = (event) => {
+                console.error('File reading error:', event.target.error);
+                alert('Error reading file.');
+            };
+            reader.readAsText(file);
+        }
+
+        async function clearObjectStore(storeName) {
+             return new Promise((resolve, reject) => {
+                const transaction = db.transaction([storeName], 'readwrite');
+                const store = transaction.objectStore(storeName);
+                const request = store.clear();
+                request.onsuccess = () => resolve();
+                request.onerror = (event) => reject(event.target.errorCode);
+            });
+        }
+
+         async function addDataToObjectStore(storeName, data) {
+             return new Promise((resolve, reject) => {
+                const transaction = db.transaction([storeName], 'readwrite');
+                const store = transaction.objectStore(storeName);
+                data.forEach(item => {
+                    // Remove the 'id' for events during restore to let IndexedDB assign new ones
+                    // unless the store uses a different keyPath or autoIncrement is not desired.
+                    // For this app, autoIncrement is used, so removing 'id' is safer.
+                    if (storeName === EVENTS_STORE && item.id !== undefined) {
+                         delete item.id;
+                    }
+                    store.add(item);
+                });
+                transaction.oncomplete = () => resolve();
+                transaction.onerror = (event) => reject(event.target.errorCode);
+            });
+        }
+
+
+        // Calendar Rendering
+        async function renderCalendar() {
+            const year = currentGregorianDate.getFullYear();
+            const month = currentGregorianDate.getMonth(); // 0-indexed
+
+            const firstDayOfMonth = new Date(year, month, 1);
+            const lastDayOfMonth = new Date(year, month + 1, 0);
+            const daysInMonth = lastDayOfMonth.getDate();
+
+            const firstDayOfWeek = firstDayOfMonth.getDay(); // 0 for Sunday, 6 for Saturday
+
+            const calendarGrid = document.querySelector('.calendar-grid');
+            // Clear previous days, but keep day labels
+            while (calendarGrid.children.length > 7) {
+                calendarGrid.removeChild(calendarGrid.lastChild);
+            }
+
+            // Add empty days for the start of the week
+            for (let i = 0; i < firstDayOfWeek; i++) {
+                const emptyDay = document.createElement('div');
+                emptyDay.classList.add('calendar-day', 'other-month');
+                calendarGrid.appendChild(emptyDay);
+            }
+
+            const events = await getEventsForMonth(year, month);
+            const importantDates = await loadImportantDates(); // Load important dates
+
+            // Add days of the month
+            for (let day = 1; day <= daysInMonth; day++) {
+                const gregorianDate = new Date(year, month, day);
+                const hijriDate = gregorianToHijri(year, month + 1, day); // Month is 1-indexed for conversion
+                const adjustedHijriDate = adjustHijriDate(hijriDate, hijriAdjustment);
+
+                const dayElement = document.createElement('div');
+                dayElement.classList.add('calendar-day');
+                dayElement.dataset.gregorianDate = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+
+                const dayNumbers = document.createElement('div');
+                dayNumbers.classList.add('day-numbers');
+                dayNumbers.innerHTML = `
+                    <span class="hijri">${adjustedHijriDate.hd}</span>
+                    <span class="gregorian">${day}</span>
+                `;
+                dayElement.appendChild(dayNumbers);
+
+                // Add moon phase visual (basic)
+                const moonPhaseDiv = document.createElement('div');
+                moonPhaseDiv.classList.add('moon-phase');
+                // Basic moon phase logic based on Hijri day
+                if (adjustedHijriDate.hd === 1) moonPhaseDiv.classList.add('new-moon');
+                else if (adjustedHijriDate.hd >= 2 && adjustedHijriDate.hd <= 7) moonPhaseDiv.classList.add('waxing-crescent');
+                else if (adjustedHijriDate.hd === 8) moonPhaseDiv.classList.add('first-quarter');
+                else if (adjustedHijriDate.hd >= 9 && adjustedHijriDate.hd <= 14) moonPhaseDiv.classList.add('waxing-gibbous');
+                else if (adjustedHijriDate.hd === 15) moonPhaseDiv.classList.add('full-moon');
+                else if (adjustedHijriDate.hd >= 16 && adjustedHijriDate.hd <= 22) moonPhaseDiv.classList.add('waning-gibbous');
+                else if (adjustedHijriDate.hd === 23) moonPhaseDiv.classList.add('last-quarter');
+                else if (adjustedHijriDate.hd >= 24 && adjustedHijriDate.hd <= 30) moonPhaseDiv.classList.add('waning-crescent'); // Assuming month can be 29 or 30 days
+
+                dayElement.appendChild(moonPhaseDiv);
+
+
+                const dayEventsDiv = document.createElement('div');
+                dayEventsDiv.classList.add('day-events');
+
+                // Add user events for this day
+                const eventsOnThisDay = events.filter(event => {
+                    const eventDate = new Date(event.date);
+                    return eventDate.getFullYear() === year && eventDate.getMonth() === month && eventDate.getDate() === day;
+                });
+                eventsOnThisDay.forEach(event => {
+                    const eventItem = document.createElement('div');
+                    eventItem.classList.add('day-event-item', 'user-event');
+                    eventItem.textContent = event.title;
+                    eventItem.dataset.eventId = event.id;
+                    eventItem.title = `${event.title}\n${event.notes}`; // Tooltip
+                    dayEventsDiv.appendChild(eventItem);
+                });
+
+                 // Add important dates for this day
+                const importantDatesOnThisDay = importantDates.filter(date => {
+                    const importantDate = new Date(date.date);
+                    return importantDate.getFullYear() === year && importantDate.getMonth() === month && importantDate.getDate() === day;
+                });
+                 importantDatesOnThisDay.forEach(date => {
+                    const eventItem = document.createElement('div');
+                    eventItem.classList.add('day-event-item', 'important-date');
+                    eventItem.textContent = date.title;
+                    eventItem.title = date.title; // Tooltip
+                    dayEventsDiv.appendChild(eventItem);
+                });
+
+
+                dayElement.appendChild(dayEventsDiv);
+                calendarGrid.appendChild(dayElement);
+            }
+
+            // Update header
+            const currentHijriDateForHeader = gregorianToHijri(year, month + 1, 15); // Use mid-month for header Hijri year/month
+             const adjustedHijriDateForHeader = adjustHijriDate(currentHijriDateForHeader, hijriAdjustment);
+
+            document.getElementById('currentMonthYear').textContent = `${HIJRI_MONTHS[adjustedHijriDateForHeader.hm - 1]} ${adjustedHijriDateForHeader.hy} / ${new Date(year, month).toLocaleString('en-US', { month: 'long' })} ${year}`;
+
+            // Add click listeners to days
+            document.querySelectorAll('.calendar-day:not(.other-month)').forEach(dayElement => {
+                dayElement.addEventListener('click', handleDayClick);
+            });
+
+             // Add click listeners to user events within days
+            document.querySelectorAll('.calendar-day .day-event-item.user-event').forEach(eventItem => {
+                eventItem.addEventListener('click', handleEventClick);
+            });
+        }
+
+        function adjustHijriDate(hijriDate, adjustment) {
+            // Basic adjustment logic. More complex calculations might be needed for precise conversions.
+            // This simply adds/subtracts days and recalculates the Hijri date.
+            // Note: This is a simplification and might not handle month/year rollovers perfectly
+            // with the basic conversion functions.
+            const gregorianEquivalent = hijriToGregorian(hijriDate.hy, hijriDate.hm, hijriDate.hd);
+            const gregorianDate = new Date(gregorianEquivalent.gy, gregorianEquivalent.gm, gregorianEquivalent.gd); // gm is 0-indexed from hijriToGregorian
+            gregorianDate.setDate(gregorianDate.getDate() + adjustment);
+            return gregorianToHijri(gregorianDate.getFullYear(), gregorianDate.getMonth() + 1, gregorianDate.getDate()); // gregorianToHijri expects 1-indexed month
+        }
+
+
+        // Modal Handling
+        const eventModal = document.getElementById('eventModal');
+        const viewEventsModal = document.getElementById('viewEventsModal');
+        const settingsModal = document.getElementById('settingsModal');
+        const backupRestoreModal = document.getElementById('backupRestoreModal');
+        const searchModal = document.getElementById('searchModal');
+
+        document.querySelectorAll('.modal .close-button').forEach(button => {
+            button.addEventListener('click', () => {
+                button.closest('.modal').style.display = 'none';
+            });
+        });
+
+        window.onclick = (event) => {
+            if (event.target.classList.contains('modal')) {
+                event.target.style.display = 'none';
+            }
+        };
+
+        function openEventModal(date = null, event = null) {
+            const titleInput = document.getElementById('eventTitle');
+            const dateInput = document.getElementById('eventDate');
+            const notesInput = document.getElementById('eventNotes');
+            const eventIdInput = document.getElementById('eventId');
+            const modalTitle = document.getElementById('eventModalTitle');
+            const deleteButton = document.getElementById('deleteEventBtn');
+
+            if (event) {
+                modalTitle.textContent = 'Edit Event';
+                eventIdInput.value = event.id;
+                titleInput.value = event.title;
+                dateInput.value = event.date;
+                notesInput.value = event.notes;
+                deleteButton.style.display = 'inline-block';
+            } else {
+                modalTitle.textContent = 'Add New Event';
+                eventIdInput.value = '';
+                titleInput.value = '';
+                dateInput.value = date ? date : '';
+                notesInput.value = '';
+                deleteButton.style.display = 'none';
+            }
+
+            eventModal.style.display = 'block';
+        }
+
+        async function openViewEventsModal() {
+            const eventListDiv = document.getElementById('eventList');
+            eventListDiv.innerHTML = ''; // Clear previous list
+
+            const allEvents = await getAllEvents();
+
+            if (allEvents.length === 0) {
+                eventListDiv.innerHTML = '<p>No events logged yet.</p>';
+                viewEventsModal.style.display = 'block';
+                return;
+            }
+
+            // Sort events by date
+            allEvents.sort((a, b) => new Date(a.date) - new Date(b.date));
+
+            allEvents.forEach(event => {
+                const eventItem = document.createElement('div');
+                eventItem.classList.add('event-item');
+                eventItem.innerHTML = `
+                    <h4>${event.title}</h4>
+                    <p class="event-date">${new Date(event.date).toDateString()}</p>
+                    <p>${event.notes}</p>
+                    <button class="edit-event-btn" data-id="${event.id}">Edit</button>
+                    <button class="delete-event-btn" data-id="${event.id}">Delete</button>
+                `;
+                eventListDiv.appendChild(eventItem);
+            });
+
+            // Add listeners to edit/delete buttons in the list
+            eventListDiv.querySelectorAll('.edit-event-btn').forEach(button => {
+                button.addEventListener('click', async () => {
+                    const eventId = parseInt(button.dataset.id, 10);
+                    const allEvents = await getAllEvents(); // Fetch all events to find the one to edit
+                    const eventToEdit = allEvents.find(e => e.id === eventId);
+                    if (eventToEdit) {
+                        viewEventsModal.style.display = 'none'; // Close list modal
+                        openEventModal(null, eventToEdit);
+                    }
+                });
+            });
+
+             eventListDiv.querySelectorAll('.delete-event-btn').forEach(button => {
+                button.addEventListener('click', async () => {
+                    const eventId = parseInt(button.dataset.id, 10);
+                    if (confirm('Are you sure you want to delete this event?')) {
+                        await deleteEvent(eventId);
+                        openViewEventsModal(); // Refresh the list
+                    }
+                });
+            });
+
+
+            viewEventsModal.style.display = 'block';
+        }
+
+         async function openSearchModal() {
+            const searchResultsDiv = document.getElementById('searchResults');
+            searchResultsDiv.innerHTML = ''; // Clear previous results
+            document.getElementById('searchQuery').value = ''; // Clear search input
+            searchModal.style.display = 'block';
+        }
+
+        async function performSearch() {
+            const query = document.getElementById('searchQuery').value.trim();
+            const searchResultsDiv = document.getElementById('searchResults');
+            searchResultsDiv.innerHTML = ''; // Clear previous results
+
+            if (query.length < 2) {
+                searchResultsDiv.innerHTML = '<p>Enter at least 2 characters to search.</p>';
+                return;
+            }
+
+            const results = await searchEvents(query);
+
+            if (results.length === 0) {
+                searchResultsDiv.innerHTML = '<p>No events found.</p>';
+                return;
+            }
+
+             results.forEach(event => {
+                const eventItem = document.createElement('div');
+                eventItem.classList.add('event-item');
+                eventItem.innerHTML = `
+                    <h4>${event.title}</h4>
+                    <p class="event-date">${new Date(event.date).toDateString()}</p>
+                    <p>${event.notes}</p>
+                     <button class="edit-event-btn" data-id="${event.id}">Edit</button>
+                `;
+                searchResultsDiv.appendChild(eventItem);
+            });
+
+             // Add listeners to edit buttons in search results
+            searchResultsDiv.querySelectorAll('.edit-event-btn').forEach(button => {
+                button.addEventListener('click', async () => {
+                    const eventId = parseInt(button.dataset.id, 10);
+                    const allEvents = await getAllEvents(); // Fetch all events to find the one to edit
+                    const eventToEdit = allEvents.find(e => e.id === eventId);
+                    if (eventToEdit) {
+                        searchModal.style.display = 'none'; // Close search modal
+                        openEventModal(null, eventToEdit);
+                    }
+                });
+            });
+        }
+
+
+        // Event Handlers
+        function handleDayClick(event) {
+            // Check if the click was on an event item, if so, handleEventClick will take over
+            if (!event.target.classList.contains('day-event-item')) {
+                 const date = event.currentTarget.dataset.gregorianDate;
+                 if (date) { // Only open modal for valid days
+                    openEventModal(date);
+                 }
+            }
+        }
+
+        async function handleEventClick(event) {
+             event.stopPropagation(); // Prevent the day click handler from firing
+             const eventId = parseInt(event.target.dataset.eventId, 10);
+             const allEvents = await getAllEvents(); // Fetch all events to find the one to edit
+             const eventToEdit = allEvents.find(e => e.id === eventId);
+             if (eventToEdit) {
+                 openEventModal(null, eventToEdit);
+             }
+        }
+
+
+        document.getElementById('prevMonthBtn').addEventListener('click', () => {
+            currentGregorianDate.setMonth(currentGregorianDate.getMonth() - 1);
+            renderCalendar();
+        });
+
+         document.getElementById('prevMonthBtnHeader').addEventListener('click', () => {
+            currentGregorianDate.setMonth(currentGregorianDate.getMonth() - 1);
+            renderCalendar();
+        });
+
+        document.getElementById('nextMonthBtn').addEventListener('click', () => {
+            currentGregorianDate.setMonth(currentGregorianDate.getMonth() + 1);
+            renderCalendar();
+        });
+
+         document.getElementById('nextMonthBtnHeader').addEventListener('click', () => {
+            currentGregorianDate.setMonth(currentGregorianDate.getMonth() + 1);
+            renderCalendar();
+        });
+
+         document.getElementById('prevYearBtn').addEventListener('click', () => {
+            currentGregorianDate.setFullYear(currentGregorianDate.getFullYear() - 1);
+            renderCalendar();
+        });
+
+         document.getElementById('nextYearBtn').addEventListener('click', () => {
+            currentGregorianDate.setFullYear(currentGregorianDate.getFullYear() + 1);
+            renderCalendar();
+        });
+
+
+        document.getElementById('todayBtn').addEventListener('click', () => {
+            currentGregorianDate = new Date();
+            renderCalendar();
+        });
+
+        document.getElementById('addEventBtn').addEventListener('click', () => {
+            openEventModal();
+        });
+
+        document.getElementById('viewEventsBtn').addEventListener('click', () => {
+            openViewEventsModal();
+        });
+
+         document.getElementById('searchEventsBtn').addEventListener('click', () => {
+            openSearchModal();
+        });
+
+        document.getElementById('settingsBtn').addEventListener('click', () => {
+            document.getElementById('settingsModal').style.display = 'block';
+        });
+
+         document.getElementById('backupRestoreBtn').addEventListener('click', () => {
+            document.getElementById('backupRestoreModal').style.display = 'block';
+        });
+
+
+        document.getElementById('saveEventBtn').addEventListener('click', async () => {
+            const id = document.getElementById('eventId').value;
+            const title = document.getElementById('eventTitle').value.trim();
+            const date = document.getElementById('eventDate').value;
+            const notes = document.getElementById('eventNotes').value.trim();
+
+            if (!title || !date) {
+                alert('Please enter event title and date.');
+                return;
+            }
+
+            const event = { title, date, notes };
+
+            try {
+                if (id) {
+                    event.id = parseInt(id, 10);
+                    await updateEvent(event);
+                } else {
+                    await addEvent(event);
+                }
+                eventModal.style.display = 'none';
+            } catch (error) {
+                console.error('Failed to save event:', error);
+                alert('Failed to save event.');
+            }
+        });
+
+         document.getElementById('deleteEventBtn').addEventListener('click', async () => {
+            const id = parseInt(document.getElementById('eventId').value, 10);
+            if (id && confirm('Are you sure you want to delete this event?')) {
+                 try {
+                    await deleteEvent(id);
+                    eventModal.style.display = 'none';
+                 } catch (error) {
+                    console.error('Failed to delete event:', error);
+                    alert('Failed to delete event.');
+                 }
+            }
+         });
+
+
+        document.getElementById('saveSettingsBtn').addEventListener('click', async () => {
+            try {
+                await saveSettings();
+                settingsModal.style.display = 'none';
+                alert('Settings saved.');
+            } catch (error) {
+                console.error('Failed to save settings:', error);
+                alert('Failed to save settings.');
+            }
+        });
+
+         document.getElementById('backupBtn').addEventListener('click', backupData);
+
+         document.getElementById('restoreBtn').addEventListener('click', () => {
+            const fileInput = document.getElementById('restoreFile');
+            restoreData(fileInput.files[0]);
+         });
+
+         document.getElementById('searchQuery').addEventListener('input', performSearch);
+
+
+        // Initialize the app
+        document.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('currentYear').textContent = new Date().getFullYear();
+            openDatabase(); // Open DB and then render calendar
+        });
+
+    </script>
+
+</body>
+</html>

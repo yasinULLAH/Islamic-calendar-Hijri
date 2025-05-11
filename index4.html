@@ -1,0 +1,1313 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Hijri Calendar</title>
+    <!-- Author: Yasin Ullah. Pakistani. -->
+    <style>
+        :root {
+            --bg-color: #1a1a2e; /* Deep space blue */
+            --primary-color: #00e676; /* Bright futuristic green */
+            --secondary-color: #7b1fa2; /* Deep purple */
+            --accent-color: #fbc02d; /* Golden yellow for accents */
+            --text-color: #e0e0e0; /* Light grey/white for text */
+            --text-secondary-color: #b0b0c0; /* Lighter grey for secondary text */
+            --border-color: #4a4a6a; /* Darker border */
+            --card-bg-color: #2c2c44; /* Slightly lighter card background */
+            --hover-bg-color: #3a3a54;
+            --modal-bg-color: rgba(26, 26, 46, 0.95);
+            --font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            --border-radius: 8px;
+            --box-shadow: 0 4px 15px rgba(0, 230, 118, 0.1);
+        }
+
+        [data-theme="ramadan"] {
+            --bg-color: #0d0221; /* Deep night sky */
+            --primary-color: #f0c419; /* Golden moon/stars */
+            --secondary-color: #6a0dad; /* Spiritual purple */
+            --accent-color: #c8a2c8; /* Lilac */
+            --text-color: #f5f5f5;
+            --card-bg-color: #1f0a36;
+            --border-color: #4b2e83;
+        }
+
+        [data-theme="eid"] {
+            --bg-color: #e6fffa; /* Light mint green */
+            --primary-color: #00796b; /* Teal */
+            --secondary-color: #ffc107; /* Amber */
+            --accent-color: #f44336; /* Red for festivity */
+            --text-color: #212121; /* Dark text for light theme */
+            --text-secondary-color: #555;
+            --card-bg-color: #ffffff;
+            --border-color: #b2dfdb;
+        }
+        
+        [data-theme="muharram"] {
+            --bg-color: #263238; /* Dark Slate Grey */
+            --primary-color: #CFD8DC; /* Light Grey Blue */
+            --secondary-color: #455A64; /* Grey Blue */
+            --accent-color: #78909C; /* Muted Blue Grey */
+            --text-color: #ECEFF1; /* Lightest Grey Blue */
+            --card-bg-color: #37474F; /* Darker Slate */
+            --border-color: #546E7A;
+        }
+
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: var(--font-family);
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            line-height: 1.6;
+            transition: background-color 0.3s, color 0.3s;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        #app-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            width: 100%;
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 0;
+            border-bottom: 1px solid var(--border-color);
+            margin-bottom: 20px;
+        }
+
+        header h1 {
+            font-size: 2.5em;
+            color: var(--primary-color);
+            font-weight: 300;
+            letter-spacing: 1px;
+        }
+        
+        .controls-top {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .settings-panel {
+            background-color: var(--card-bg-color);
+            padding: 15px;
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+            margin-bottom: 20px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            align-items: center;
+            justify-content: space-between;
+        }
+        
+        .settings-group {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .settings-group label {
+            font-size: 0.9em;
+            color: var(--text-secondary-color);
+        }
+
+        select, input[type="number"], input[type="text"], input[type="date"], input[type="time"], textarea, button {
+            background-color: var(--card-bg-color);
+            color: var(--text-color);
+            border: 1px solid var(--border-color);
+            padding: 10px;
+            border-radius: var(--border-radius);
+            font-family: var(--font-family);
+            font-size: 1em;
+        }
+        
+        input::placeholder, textarea::placeholder {
+            color: var(--text-secondary-color);
+        }
+
+        button {
+            background-color: var(--primary-color);
+            color: var(--bg-color); /* Contrast for button text */
+            cursor: pointer;
+            transition: background-color 0.3s, transform 0.1s;
+            font-weight: bold;
+        }
+        
+        button.secondary {
+            background-color: var(--secondary-color);
+            color: var(--text-color);
+        }
+        
+        button.danger {
+            background-color: #e53935; /* Red for danger */
+            color: white;
+        }
+
+        button:hover {
+            opacity: 0.9;
+            transform: translateY(-1px);
+        }
+        
+        button:disabled {
+            background-color: var(--border-color);
+            color: var(--text-secondary-color);
+            cursor: not-allowed;
+        }
+
+        #calendar-controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding: 10px;
+            background-color: var(--card-bg-color);
+            border-radius: var(--border-radius);
+        }
+
+        #current-month-year {
+            font-size: 1.5em;
+            font-weight: bold;
+            color: var(--accent-color);
+            text-align: center;
+            flex-grow: 1;
+        }
+
+        #calendar-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 5px;
+            background-color: var(--card-bg-color);
+            padding: 10px;
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+        }
+
+        .calendar-header-cell {
+            font-weight: bold;
+            text-align: center;
+            padding: 10px 5px;
+            color: var(--primary-color);
+            font-size: 0.9em;
+        }
+
+        .calendar-day-cell {
+            position: relative;
+            border: 1px solid var(--border-color);
+            min-height: 120px;
+            padding: 8px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            border-radius: 4px;
+        }
+
+        .calendar-day-cell:hover {
+            background-color: var(--hover-bg-color);
+        }
+
+        .calendar-day-cell.other-month {
+            opacity: 0.4;
+            background-color: transparent;
+            cursor: default;
+        }
+        .calendar-day-cell.today .hijri-date-num {
+            background-color: var(--accent-color);
+            color: var(--bg-color);
+            border-radius: 50%;
+            width: 28px;
+            height: 28px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+        }
+
+        .date-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+        }
+        .hijri-date-num {
+            font-size: 1.4em;
+            font-weight: bold;
+            color: var(--primary-color);
+        }
+        .gregorian-date-num {
+            font-size: 0.8em;
+            color: var(--text-secondary-color);
+        }
+        .moon-phase {
+            font-size: 1.2em;
+            align-self: center;
+        }
+        .hijri-details {
+            font-size: 0.7em;
+            color: var(--text-secondary-color);
+            text-align: right;
+        }
+
+        .day-events {
+            font-size: 0.75em;
+            margin-top: 5px;
+            max-height: 50px; /* Adjust as needed */
+            overflow-y: auto;
+        }
+        .day-events div {
+            padding: 2px;
+            margin-bottom: 2px;
+            border-radius: 3px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .event-personal { background-color: rgba(0, 230, 118, 0.2); border-left: 3px solid var(--primary-color); }
+        .event-important { background-color: rgba(251, 192, 45, 0.2); border-left: 3px solid var(--accent-color); }
+        .event-reminder { border-right: 3px solid var(--secondary-color); }
+
+
+        /* Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: var(--modal-bg-color);
+        }
+
+        .modal-content {
+            background-color: var(--card-bg-color);
+            margin: 10% auto;
+            padding: 30px;
+            border: 1px solid var(--border-color);
+            width: 80%;
+            max-width: 600px;
+            border-radius: var(--border-radius);
+            box-shadow: 0 5px 25px rgba(0,0,0,0.3);
+            position: relative;
+        }
+
+        .close-button {
+            color: var(--text-secondary-color);
+            position: absolute;
+            top: 15px;
+            right: 20px;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        .close-button:hover { color: var(--primary-color); }
+
+        .modal h2 { color: var(--primary-color); margin-bottom: 20px; }
+        .modal label { display: block; margin-bottom: 5px; font-weight: bold; color: var(--text-secondary-color); }
+        .modal input[type="text"], .modal input[type="date"], .modal input[type="time"], .modal textarea, .modal select {
+            width: 100%;
+            margin-bottom: 15px;
+            background-color: var(--bg-color); /* Slightly different for inputs in modal */
+        }
+        .modal textarea { min-height: 100px; resize: vertical; }
+
+        #event-list-view {
+            margin-top: 20px;
+            background-color: var(--card-bg-color);
+            padding: 15px;
+            border-radius: var(--border-radius);
+        }
+        #event-list-view h2 { color: var(--primary-color); margin-bottom: 10px; }
+        .event-list-item {
+            border: 1px solid var(--border-color);
+            padding: 10px;
+            margin-bottom: 10px;
+            border-radius: 4px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .event-list-item:hover { background-color: var(--hover-bg-color); }
+        .event-list-details { flex-grow: 1; }
+        .event-list-actions button { margin-left: 5px; padding: 5px 10px; font-size: 0.9em; }
+
+        .tabs { display: flex; margin-bottom: 15px; border-bottom: 1px solid var(--border-color); }
+        .tab-button {
+            padding: 10px 15px;
+            cursor: pointer;
+            border: none;
+            background-color: transparent;
+            color: var(--text-secondary-color);
+            font-size: 1em;
+            border-bottom: 3px solid transparent;
+        }
+        .tab-button.active { color: var(--primary-color); border-bottom-color: var(--primary-color); font-weight: bold; }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+
+        .backup-restore-panel {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: var(--card-bg-color);
+            border-radius: var(--border-radius);
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+        .backup-restore-panel input[type="file"] {
+            display: none; /* Hide default, style label instead */
+        }
+        .backup-restore-panel label[for="importFile"] {
+            background-color: var(--secondary-color);
+            color: var(--text-color);
+            padding: 10px;
+            border-radius: var(--border-radius);
+            cursor: pointer;
+            font-weight: bold;
+        }
+        .backup-restore-panel label[for="importFile"]:hover { opacity: 0.9; }
+
+        .footer-credits {
+            text-align: center;
+            padding: 15px;
+            font-size: 0.9em;
+            color: var(--text-secondary-color);
+            border-top: 1px solid var(--border-color);
+            margin-top: auto; /* Pushes footer to bottom */
+        }
+        
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            header { flex-direction: column; gap: 10px; }
+            header h1 { font-size: 2em; }
+            #calendar-controls { flex-direction: column; gap: 10px; }
+            .calendar-day-cell { min-height: 90px; padding: 5px; }
+            .hijri-date-num { font-size: 1.1em; }
+            .gregorian-date-num { font-size: 0.7em; }
+            .moon-phase { font-size: 1em; }
+            .day-events { max-height: 30px; }
+            .modal-content { width: 95%; margin: 5% auto; }
+            .settings-panel { flex-direction: column; align-items: stretch; }
+            .tabs { flex-wrap: wrap; }
+            .tab-button { flex-basis: 50%; text-align: center; }
+        }
+        @media (max-width: 480px) {
+            .calendar-header-cell { font-size: 0.7em; padding: 8px 2px; }
+            .hijri-details { display: none; } /* Hide less critical info on very small screens */
+            .controls-top { flex-direction: column; width: 100%; gap: 5px; }
+            .controls-top select, .controls-top input { width: 100%; }
+            .backup-restore-panel { flex-direction: column; }
+            .backup-restore-panel button, .backup-restore-panel label[for="importFile"] { width: 100%; text-align: center; }
+        }
+
+    </style>
+</head>
+<body>
+    <div id="app-container">
+        <header>
+            <h1>My Hijri Calendar</h1>
+            <div class="controls-top">
+                <select id="theme-switcher" title="Select Theme">
+                    <option value="default">Futuristic Space</option>
+                    <option value="ramadan">Ramadan Nights</option>
+                    <option value="eid">Eid Celebration</option>
+                    <option value="muharram">Muharram Solemn</option>
+                </select>
+                <button id="show-settings-button" class="secondary">⚙️ Settings</button>
+            </div>
+        </header>
+
+        <div id="settings-modal" class="modal">
+            <div class="modal-content">
+                <span class="close-button" id="close-settings-modal">×</span>
+                <h2>Settings</h2>
+                <div class="settings-group">
+                    <label for="hijri-adjustment">Hijri Date Adjustment (days):</label>
+                    <input type="number" id="hijri-adjustment" min="-2" max="2" value="0">
+                    <small>Adjust if local moon sighting differs. E.g., -1 or +1.</small>
+                </div>
+                <button id="save-settings-button" style="margin-top: 15px;">Save Settings</button>
+            </div>
+        </div>
+        
+        <div class="tabs">
+            <button class="tab-button active" data-tab="calendar-view">Calendar View</button>
+            <button class="tab-button" data-tab="list-view">Event List</button>
+            <button class="tab-button" data-tab="backup-restore-view">Backup/Restore</button>
+        </div>
+
+        <div id="calendar-view" class="tab-content active">
+            <div id="calendar-controls">
+                <button id="prev-year-button">⏪ Year</button>
+                <button id="prev-month-button">◀️ Month</button>
+                <div id="current-month-year"></div>
+                <button id="next-month-button">Month ▶️</button>
+                <button id="next-year-button">Year ⏩</button>
+                <button id="today-button" class="secondary">Today</button>
+            </div>
+            <div id="calendar-grid-header" style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; padding: 0 10px;">
+                <!-- Day names will be injected by JS -->
+            </div>
+            <div id="calendar-grid">
+                <!-- Calendar days will be injected by JS -->
+            </div>
+        </div>
+
+        <div id="list-view" class="tab-content">
+            <div class="settings-panel" style="margin-bottom: 10px;"> <!-- Re-using for search bar styling -->
+                 <input type="text" id="search-events-input" placeholder="Search events by title or notes..." style="flex-grow:1;">
+            </div>
+            <div id="event-list-container">
+                <h2>All Logged Events</h2>
+                <div id="event-list-items">
+                    <!-- Event items will be injected here -->
+                </div>
+            </div>
+        </div>
+        
+        <div id="backup-restore-view" class="tab-content">
+            <div class="backup-restore-panel">
+                <button id="backup-data-button">Backup Data (JSON)</button>
+                <input type="file" id="importFile" accept=".json">
+                <label for="importFile">Import Data (JSON)</label>
+            </div>
+            <p style="margin-top:10px; font-size:0.9em; color: var(--text-secondary-color);">
+                Backup will download a JSON file of all your events and settings.
+                Import will replace current data with data from the selected JSON file. Make sure the file is a valid backup from this app.
+            </p>
+        </div>
+
+        <div id="event-modal" class="modal">
+            <div class="modal-content">
+                <span class="close-button" id="close-event-modal">×</span>
+                <h2 id="event-modal-title">Log Event</h2>
+                <input type="hidden" id="event-id">
+                <label for="event-hijri-date-display">Hijri Date:</label>
+                <input type="text" id="event-hijri-date-display" readonly disabled style="margin-bottom: 5px; background-color: var(--bg-color);">
+                <label for="event-gregorian-date-display">Gregorian Date:</label>
+                <input type="text" id="event-gregorian-date-display" readonly disabled style="margin-bottom: 15px; background-color: var(--bg-color);">
+                
+                <input type="hidden" id="event-hijri-date-iso"> <!-- Store YYYY-MM-DD for saving -->
+
+                <label for="event-title">Title:</label>
+                <input type="text" id="event-title" placeholder="e.g., Baby's Aqiqah, Local Eid Prayer">
+
+                <label for="event-notes">Notes:</label>
+                <textarea id="event-notes" placeholder="Details, location, time, etc."></textarea>
+
+                <label for="event-reminder-enable">Set Reminder?</label>
+                <input type="checkbox" id="event-reminder-enable" style="width:auto; margin-bottom: 5px;">
+                <div id="reminder-fields" style="display:none;">
+                    <label for="event-reminder-time">Reminder Time (for selected Gregorian date):</label>
+                    <input type="time" id="event-reminder-time">
+                    <small>Note: Reminders trigger a browser notification if the app is open around this time.</small>
+                </div>
+                
+                <div style="display: flex; justify-content: space-between; margin-top: 20px;">
+                    <button id="save-event-button">Save Event</button>
+                    <button id="delete-event-button" class="danger" style="display:none;">Delete Event</button>
+                </div>
+            </div>
+        </div>
+        <footer class="footer-credits">
+            My Hijri Calendar App by Yasin Ullah (Pakistani)
+        </footer>
+    </div>
+
+    <script>
+        // Embedded hijri-date library (v0.2.2)
+        // Content of https://cdn.jsdelivr.net/npm/hijri-date@0.2.2/dist/hijri-date.min.js
+        !function(e,t){"object"==typeof exports&&"object"==typeof module?module.exports=t():"function"==typeof define&&define.amd?define([],t):"object"==typeof exports?exports.HijriDate=t():e.HijriDate=t()}(this,function(){return function(e){function t(r){if(n[r])return n[r].exports;var i=n[r]={exports:{},id:r,loaded:!1};return e[r].call(i.exports,i,i.exports,t),i.loaded=!0,i.exports}var n={};return t.m=e,t.c=n,t.p="",t(0)}([function(e,t,n){"use strict";function r(e){return e&&e.__esModule?e:{"default":e}}Object.defineProperty(t,"__esModule",{value:!0});var i=n(2),o=r(i),s=n(1),a=r(s),u=function(){function e(){var t=arguments.length<=0||void 0===arguments[0]?void 0:arguments[0],n=arguments.length<=1||void 0===arguments[1]?void 0:arguments[1],r=arguments.length<=2||void 0===arguments[2]?void 0:arguments[2];if(a["default"](this,e),t instanceof Date){var i=o["default"].toHijri(t);this._year=i.year,this._month=i.month,this._date=i.date,this._day=t.getDay()}else if(t instanceof e){this._year=t._year,this._month=t._month,this._date=t._date;var s=o["default"].toGregorian(this._year,this._month,this._date);this._day=s.getDay()}else if(void 0===t)this._fromGregorian(new Date);else{if(isNaN(parseInt(t))||isNaN(parseInt(n))||isNaN(parseInt(r)))throw new Error("Invalid Hijri Date");this._year=parseInt(t),this._month=parseInt(n),this._date=parseInt(r);var u=o["default"].toGregorian(this._year,this._month,this._date);if(!u)throw new Error("Invalid Hijri Date");this._day=u.getDay()}this._fixMonth()}_fixMonth(){for(;this._month>12;)this._month-=12,this._year+=1;for(;this._month<=0;)this._month+=12,this._year-=1}_fromGregorian(e){var t=o["default"].toHijri(e);this._year=t.year,this._month=t.month,this._date=t.date,this._day=e.getDay(),this._fixMonth()}return e.prototype.getFullYear=function(){return this._year},e.prototype.getMonth=function(){return this._month},e.prototype.getDate=function(){return this._date},e.prototype.getDay=function(){return this._day},e.prototype.setFullYear=function(e){var t=arguments.length<=1||void 0===arguments[1]?this._month-1:arguments[1],n=arguments.length<=2||void 0===arguments[2]?this._date:arguments[2];this._year=parseInt(e),this._month=parseInt(t)+1,this._date=parseInt(n);var r=o["default"].toGregorian(this._year,this._month,this._date);if(!r)throw new Error("Invalid Hijri Date");return this._day=r.getDay(),this._fixMonth(),r.getTime()},e.prototype.setMonth=function(e){var t=arguments.length<=1||void 0===arguments[1]?this._date:arguments[1];this._month=parseInt(e)+1,this._date=parseInt(t);var n=o["default"].toGregorian(this._year,this._month,this._date);if(!n)throw new Error("Invalid Hijri Date");return this._day=n.getDay(),this._fixMonth(),n.getTime()},e.prototype.setDate=function(e){this._date=parseInt(e);var t=o["default"].toGregorian(this._year,this._month,this._date);if(!t)throw new Error("Invalid Hijri Date");return this._day=t.getDay(),t.getTime()},e.prototype.add=function(e,t){if(e=Number(e),"day"===t||"days"===t)this.setDate(this.getDate()+e);else if("month"===t||"months"===t)this.setMonth(this.getMonth()-1+e);else{if("year"!==t&&"years"!==t)throw new Error("Unknown unit "+t);this.setFullYear(this.getFullYear()+e)}return this},e.prototype.toGregorian=function(){return o["default"].toGregorian(this._year,this._month,this._date)},e.prototype.valueOf=function(){var e=this.toGregorian();return e?e.getTime():NaN},e.prototype.toString=function(){return this.format(" CopernicusDate iYYYY/iM/iD")},e.prototype.getWeekOfYear=function(){var e=this.toGregorian(),t=new Date(e.getFullYear(),0,1),n=Math.ceil(((e-t)/864e5+t.getDay()+1)/7);return n},e.prototype.getMonthName=function(e){return e=e||"en",o["default"].getMonthName(this._month,e)},e.prototype.getDayName=function(e){return e=e||"en",o["default"].getDayName(this._day,e)},e.prototype.format=function(t,n){var r=this;n=n||"en";var i={iYYYY:function(){return o["default"].toLocalNumber(r.getFullYear(),n)},iYY:function(){return o["default"].toLocalNumber(String(r.getFullYear()).substr(2),n)},iMMMM:function(){return r.getMonthName(n)},iMMM:function(){return r.getMonthName(n).substr(0,3)},iMM:function(){return o["default"].toLocalNumber(r.getMonth(),n,"00")},iM:function(){return o["default"].toLocalNumber(r.getMonth(),n)},iDDDD:function(){return r.getDayName(n)},iDDD:function(){return r.getDayName(n).substr(0,3)},iDD:function(){return o["default"].toLocalNumber(r.getDate(),n,"00")},iD:function(){return o["default"].toLocalNumber(r.getDate(),n)}};return t.replace(/iYYYY|iYY|iMMMM|iMMM|iMM|iM|iDDDD|iDDD|iDD|iD/g,function(e){return i[e]()})},e.isHijriDate=function(t){return t instanceof e},e.isValid=function(e,t,n){return!!o["default"].toGregorian(e,t,n)},e.getDaysInMonth=function(e,t){return o["default"].getDaysInMonth(e,t)},e.getDayName=function(e,t){return t=t||"en",o["default"].getDayName(e,t)},e.getMonthName=function(e,t){return t=t||"en",o["default"].getMonthName(e,t)},e.toHijri=function(e){return o["default"].toHijri(e)},e.toGregorian=function(e,t,n){return o["default"].toGregorian(e,t,n)},e.localize=function(e,t){o["default"].locales[e]=t},e.locale=function(e){o["default"].locale=e},e}();u.locales=o["default"].locales,u.locale=o["default"].locale,t["default"]=u,e.exports=t["default"]},function(e,t){"use strict";Object.defineProperty(t,"__esModule",{value:!0}),t["default"]=function(e,t){if(!(e instanceof t))throw new TypeError("Cannot call a class as a function")}},function(e,t){"use strict";function n(e){var t=Math.floor(e);return t===e?t:t+1}function r(e){return e-Math.floor(e)}function i(e,t,n){var i=u(e,t,n);return 0===i.weekday?i.weekday=7:i.weekday,i}function o(e,t,n){var r=s(e,t,n);return 0===r.weekday?r.weekday=7:r.weekday,r}function s(e,t,n){t<3&&(t+=12,e-=1);var r=Math.floor(e/100),i=2-r+Math.floor(r/4);return{weekday:Math.floor(n+Math.floor(31*(t+1)/12)+e+Math.floor(e/4)+i)%7}}function a(e,t,n){var r=s(e,t,n);return Math.floor(275*t/9)-k[t]*Math.floor((t+9)/12)+n-30+Math.floor((e+3)/4)+Math.floor((3-Math.floor((e+99)/100))/4)-r.weekday}function u(e,t,n){var r=Math.floor((11*e+3)/30),i=Math.floor((t-1)/29.5),o=Math.floor(354*e+30*t-r-i+n-1);return{weekday:o%7}}function l(e){var t=Math.floor(e/10631),i=10631*t,o=e-i,s=Math.floor((o-1)/354),a=354*s,u=Math.floor((3+11*s)/30),l=o-a-u,c=Math.floor((l-1)/29.5)+1,f=Math.floor(29.5*(c-1)),h=l-f;return{year:s+t*30+1,month:c,date:h}}function c(e,t,i){var o=Math.floor((11*e+3)/30),s=Math.floor(354*e+30*t-o+r(t/29.5)+i+p-1);return s}function f(e){var t=Math.floor((e-p)/m),n=Math.floor((11*t+14)/30),r=Math.floor((e-p-Math.floor(365.25*t)+n)/g)+1,i=Math.floor((e-p-Math.floor(365.25*(t-1))+Math.floor((11*(t-1)+14)/30))/g);r>i&&(r=i);var o=e-p-Math.floor(365.25*(t-1))-Math.floor((11*(t-1)+14)/30)-(r-1)*g,s=0;o>31+D[t%4]&&(o-=31+D[t%4],s=2);for(var a=s;a<12;a++){if(o<=C[a])break;o-=C[a]}return{year:t,month:a+1,date:o}}Object.defineProperty(t,"__esModule",{value:!0});var h={};t["default"]=h;var d=["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"],_=["محرم","صفر","ربيع الأول","ربيع الثاني","جمادى الأولى","جمادى الآخرة","رجب","شعبان","رمضان","شوال","ذو القعدة","ذو الحجة"],v=["Muharram","Safar","Rabi' al-awwal","Rabi' al-thani","Jumada al-ula","Jumada al-ukhra","Rajab","Sha'ban","Ramadan","Shawwal","Dhu al-Qi'dah","Dhu al-Hijjah"],y=["الأحد","الإثنين","الثلاثاء","الأربعاء","الخميس","الجمعة","السبت"],m=354.36667,g=29.53055,p=1948439.5,C=[31,28,31,30,31,30,31,31,30,31,30,31],D=[0,1,0,0],k=[0,0,1,1,1,1,1,1,1,0,0,0];h.locales={en:{dayNames:d,monthNames:v,digits:"0123456789"},ar:{dayNames:y,monthNames:_,digits:"٠١٢٣٤٥٦٧٨٩"}},h.locale="en",h.toLocalNumber=function(e,t,n){var r=String(e);if(n){for(var i=r.length;i<n.length;i++)r="0"+r;r=r.slice(-n.length)}if("en"!=t){var o=h.locales[t].digits;r=r.replace(/[0-9]/g,function(e){return o[e]})}return r},h.getDaysInMonth=function(e,t){var r=29+t%2;return 2===t&&h.isLeapYear(e)&&(r=30),r},h.isLeapYear=function(e){return(14+11*e)%30<11},h.getMonthName=function(e,t){return h.locales[t].monthNames[e-1]},h.getDayName=function(e,t){return h.locales[t].dayNames[e]},h.toHijri=function(e){var t=a(e.getFullYear(),e.getMonth()+1,e.getDate()),r=l(t);return r.weekday=e.getDay(),r},h.toGregorian=function(e,t,n){var r=c(e,t,n),i=f(r);return new Date(i.year,i.month-1,i.date)}}])});
+        //# sourceMappingURL=hijri-date.min.js.map
+
+        // Application Code
+        document.addEventListener('DOMContentLoaded', () => {
+            // Global state variables
+            let currentHijriYear, currentHijriMonth;
+            let hijriAdjustment = 0;
+            let events = []; // All events from DB
+            let currentTheme = 'default';
+            let db;
+
+            // Constants
+            const DB_NAME = "MyHijriCalendarDB_YasinUllah";
+            const DB_VERSION = 1;
+            const EVENTS_STORE_NAME = "events";
+            const SETTINGS_STORE_NAME = "settings";
+            const HIJRI_MONTHS_EN = [ // Not directly used, HijriDate library handles names
+                "Muharram", "Safar", "Rabi' al-awwal", "Rabi' al-thani",
+                "Jumada al-ula", "Jumada al-ukhra", "Rajab", "Sha'ban",
+                "Ramadan", "Shawwal", "Dhu al-Qi'dah", "Dhu al-Hijjah"
+            ];
+            const GREGORIAN_DAYS_EN = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+
+            const IMPORTANT_ISLAMIC_DATES = [
+                { month: 1, day: 1, name: "Islamic New Year" },
+                { month: 1, day: 10, name: "Day of Ashura" },
+                { month: 3, day: 12, name: "Mawlid an-Nabi" },
+                { month: 7, day: 27, name: "Isra and Mi'raj (approx.)" },
+                { month: 8, day: 15, name: "Nisfu Sha'ban (approx.)" },
+                { month: 9, day: 1, name: "Start of Ramadan" },
+                { month: 9, day: 27, name: "Laylat al-Qadr (common)" }, 
+                { month: 10, day: 1, name: "Eid al-Fitr" },
+                { month: 12, day: 8, name: "Start of Hajj Days" },
+                { month: 12, day: 9, name: "Day of Arafah" },
+                { month: 12, day: 10, name: "Eid al-Adha" },
+                { month: 12, day: 11, name: "Days of Tashreeq (Start)" },
+                { month: 12, day: 13, name: "Days of Tashreeq (End)" },
+            ];
+
+            // UI Elements
+            const currentMonthYearDisplay = document.getElementById('current-month-year');
+            const calendarGrid = document.getElementById('calendar-grid');
+            const calendarGridHeader = document.getElementById('calendar-grid-header');
+            const eventModal = document.getElementById('event-modal');
+            const closeEventModalButton = document.getElementById('close-event-modal');
+            const eventForm = {
+                id: document.getElementById('event-id'),
+                hijriDateDisplay: document.getElementById('event-hijri-date-display'),
+                gregorianDateDisplay: document.getElementById('event-gregorian-date-display'),
+                hijriDateISO: document.getElementById('event-hijri-date-iso'),
+                title: document.getElementById('event-title'),
+                notes: document.getElementById('event-notes'),
+                reminderEnable: document.getElementById('event-reminder-enable'),
+                reminderFields: document.getElementById('reminder-fields'),
+                reminderTime: document.getElementById('event-reminder-time'),
+                saveButton: document.getElementById('save-event-button'),
+                deleteButton: document.getElementById('delete-event-button'),
+                modalTitle: document.getElementById('event-modal-title')
+            };
+            const settingsModal = document.getElementById('settings-modal');
+            const hijriAdjustmentInput = document.getElementById('hijri-adjustment');
+            const themeSwitcher = document.getElementById('theme-switcher');
+            
+            const eventListContainer = document.getElementById('event-list-items');
+            const searchEventsInput = document.getElementById('search-events-input');
+
+            // --- Initialization ---
+            async function initializeApp() {
+                await initDB();
+                await loadSettings();
+                setupEventListeners();
+                const today = new Date();
+                const todayHijri = getAdjustedHijriDate(today);
+                currentHijriYear = todayHijri.getFullYear();
+                currentHijriMonth = todayHijri.getMonth();
+                await loadEvents();
+                renderCalendar();
+                renderEventList();
+                applyTheme(currentTheme);
+                themeSwitcher.value = currentTheme;
+                checkRemindersOnLoad();
+                setupCalendarHeaders();
+                if (Notification.permission !== "granted" && Notification.permission !== "denied") {
+                    Notification.requestPermission();
+                }
+            }
+
+            function setupCalendarHeaders() {
+                calendarGridHeader.innerHTML = '';
+                GREGORIAN_DAYS_EN.forEach(dayName => {
+                    const headerCell = document.createElement('div');
+                    headerCell.classList.add('calendar-header-cell');
+                    headerCell.textContent = dayName;
+                    calendarGridHeader.appendChild(headerCell);
+                });
+            }
+
+            // --- IndexedDB Functions ---
+            function initDB() {
+                return new Promise((resolve, reject) => {
+                    const request = indexedDB.open(DB_NAME, DB_VERSION);
+                    request.onerror = (event) => {
+                        console.error("IndexedDB error:", event.target.error);
+                        alert("Error initializing database. App may not work correctly.");
+                        reject(event.target.error);
+                    };
+                    request.onsuccess = (event) => {
+                        db = event.target.result;
+                        console.log("Database initialized successfully.");
+                        resolve();
+                    };
+                    request.onupgradeneeded = (event) => {
+                        db = event.target.result;
+                        if (!db.objectStoreNames.contains(EVENTS_STORE_NAME)) {
+                            const eventStore = db.createObjectStore(EVENTS_STORE_NAME, { keyPath: "id", autoIncrement: true });
+                            eventStore.createIndex("hijriDate", "hijriDate", { unique: false });
+                            eventStore.createIndex("gregorianDate", "gregorianDate", { unique: false });
+                            eventStore.createIndex("title", "title", { unique: false });
+                        }
+                        if (!db.objectStoreNames.contains(SETTINGS_STORE_NAME)) {
+                            db.createObjectStore(SETTINGS_STORE_NAME, { keyPath: "key" });
+                        }
+                        console.log("Database upgrade complete.");
+                    };
+                });
+            }
+
+            function saveSetting(key, value) {
+                return new Promise((resolve, reject) => {
+                    if (!db) { reject("DB not initialized"); return; }
+                    const transaction = db.transaction([SETTINGS_STORE_NAME], "readwrite");
+                    const store = transaction.objectStore(SETTINGS_STORE_NAME);
+                    store.put({ key, value });
+                    transaction.oncomplete = resolve;
+                    transaction.onerror = (event) => reject(event.target.error);
+                });
+            }
+
+            function getSetting(key) {
+                return new Promise((resolve, reject) => {
+                    if (!db) { reject("DB not initialized"); return; }
+                    const transaction = db.transaction([SETTINGS_STORE_NAME], "readonly");
+                    const store = transaction.objectStore(SETTINGS_STORE_NAME);
+                    const request = store.get(key);
+                    request.onsuccess = (event) => resolve(event.target.result ? event.target.result.value : undefined);
+                    request.onerror = (event) => reject(event.target.error);
+                });
+            }
+            
+            async function loadSettings() {
+                const adj = await getSetting('hijriAdjustment');
+                hijriAdjustment = adj !== undefined ? parseInt(adj, 10) : 0;
+                hijriAdjustmentInput.value = hijriAdjustment;
+
+                const theme = await getSetting('theme');
+                currentTheme = theme || 'default';
+            }
+
+            function addEventDB(event) {
+                return new Promise((resolve, reject) => {
+                    if (!db) { reject("DB not initialized"); return; }
+                    const transaction = db.transaction([EVENTS_STORE_NAME], "readwrite");
+                    const store = transaction.objectStore(EVENTS_STORE_NAME);
+                    const request = store.add(event);
+                    transaction.oncomplete = () => resolve(request.result); // Resolve with new key
+                    transaction.onerror = (e) => reject(e.target.error);
+                });
+            }
+
+            function updateEventDB(event) {
+                 return new Promise((resolve, reject) => {
+                    if (!db) { reject("DB not initialized"); return; }
+                    const transaction = db.transaction([EVENTS_STORE_NAME], "readwrite");
+                    const store = transaction.objectStore(EVENTS_STORE_NAME);
+                    store.put(event);
+                    transaction.oncomplete = resolve;
+                    transaction.onerror = (e) => reject(e.target.error);
+                });
+            }
+
+            function deleteEventDB(eventId) {
+                return new Promise((resolve, reject) => {
+                    if (!db) { reject("DB not initialized"); return; }
+                    const transaction = db.transaction([EVENTS_STORE_NAME], "readwrite");
+                    const store = transaction.objectStore(EVENTS_STORE_NAME);
+                    store.delete(eventId);
+                    transaction.oncomplete = resolve;
+                    transaction.onerror = (e) => reject(e.target.error);
+                });
+            }
+
+            function getAllEventsDB() {
+                return new Promise((resolve, reject) => {
+                    if (!db) { reject("DB not initialized"); return; }
+                    const transaction = db.transaction([EVENTS_STORE_NAME], "readonly");
+                    const store = transaction.objectStore(EVENTS_STORE_NAME);
+                    const request = store.getAll();
+                    request.onsuccess = (event) => resolve(event.target.result || []);
+                    request.onerror = (event) => reject(event.target.error);
+                });
+            }
+            
+            async function loadEvents() {
+                try {
+                    events = await getAllEventsDB();
+                } catch (error) {
+                    console.error("Error loading events:", error);
+                    events = [];
+                }
+            }
+
+            // --- Hijri Calendar Logic ---
+            function getAdjustedHijriDate(gregorianDate) {
+                const baseHijri = new HijriDate(gregorianDate);
+                return new HijriDate(baseHijri).add(hijriAdjustment, 'days');
+            }
+
+            function getGregorianFromAdjustedHijri(hYear, hMonth, hDay) {
+                const displayedHijri = new HijriDate(hYear, hMonth, hDay);
+                const originalHijri = new HijriDate(displayedHijri).add(-hijriAdjustment, 'days');
+                return originalHijri.toGregorian();
+            }
+            
+            function getOriginalHijriDate(gregorianDate) {
+                return new HijriDate(gregorianDate);
+            }
+
+            function renderCalendar() {
+                calendarGrid.innerHTML = ''; 
+                
+                const displayDateForHeader = new HijriDate(currentHijriYear, currentHijriMonth, 1);
+                currentMonthYearDisplay.innerHTML = `
+                    ${displayDateForHeader.format("iMMMM", "ar")} (${displayDateForHeader.format("iMMMM", "en")})
+                    <br>
+                    ${displayDateForHeader.format("iYYYY", "ar")} H (${displayDateForHeader.format("iYYYY", "en")} H)
+                `;
+
+                const firstDayGregorian = getGregorianFromAdjustedHijri(currentHijriYear, currentHijriMonth, 1);
+                const firstDayOfWeek = firstDayGregorian.getDay();
+                const tempOriginalHijriForMonthInfo = getOriginalHijriDate(firstDayGregorian);
+                const daysInMonth = HijriDate.getDaysInMonth(tempOriginalHijriForMonthInfo.getFullYear(), tempOriginalHijriForMonthInfo.getMonth());
+
+                for (let i = 0; i < firstDayOfWeek; i++) {
+                    const cell = document.createElement('div');
+                    cell.classList.add('calendar-day-cell', 'other-month');
+                    calendarGrid.appendChild(cell);
+                }
+
+                for (let day = 1; day <= daysInMonth; day++) {
+                    const cell = document.createElement('div');
+                    cell.classList.add('calendar-day-cell');
+
+                    const currentCellGregorianDate = getGregorianFromAdjustedHijri(currentHijriYear, currentHijriMonth, day);
+                    const currentCellAdjustedHijriDate = getAdjustedHijriDate(currentCellGregorianDate); 
+                    const currentCellOriginalHijriDate = getOriginalHijriDate(currentCellGregorianDate);
+
+                    cell.dataset.hijriYear = currentCellAdjustedHijriDate.getFullYear();
+                    cell.dataset.hijriMonth = currentCellAdjustedHijriDate.getMonth();
+                    cell.dataset.hijriDay = currentCellAdjustedHijriDate.getDate();
+                    cell.dataset.gregorianDate = currentCellGregorianDate.toISOString().split('T')[0];
+
+                    const hijriDateNum = document.createElement('div');
+                    hijriDateNum.classList.add('hijri-date-num');
+                    hijriDateNum.textContent = currentCellAdjustedHijriDate.format("iD", "ar"); 
+
+                    const gregorianDateNum = document.createElement('div');
+                    gregorianDateNum.classList.add('gregorian-date-num');
+                    gregorianDateNum.textContent = currentCellGregorianDate.getDate();
+
+                    const moonPhaseEl = document.createElement('div');
+                    moonPhaseEl.classList.add('moon-phase');
+                    moonPhaseEl.textContent = getMoonPhaseSymbol(currentCellGregorianDate);
+                    
+                    const dateInfoDiv = document.createElement('div');
+                    dateInfoDiv.classList.add('date-info');
+                    
+                    const hijriDetailsDiv = document.createElement('div');
+                    hijriDetailsDiv.classList.add('hijri-details');
+                    hijriDetailsDiv.innerHTML = `${currentCellAdjustedHijriDate.format("iMMM", "en")}<br>${currentCellAdjustedHijriDate.format("iYY", "en")}`;
+
+                    const leftDateInfo = document.createElement('div');
+                    leftDateInfo.appendChild(hijriDateNum);
+                    leftDateInfo.appendChild(gregorianDateNum);
+                    
+                    dateInfoDiv.appendChild(leftDateInfo);
+                    dateInfoDiv.appendChild(moonPhaseEl);
+                    dateInfoDiv.appendChild(hijriDetailsDiv);
+
+                    cell.appendChild(dateInfoDiv);
+
+                    const today = new Date();
+                    if (currentCellGregorianDate.getFullYear() === today.getFullYear() &&
+                        currentCellGregorianDate.getMonth() === today.getMonth() &&
+                        currentCellGregorianDate.getDate() === today.getDate()) {
+                        cell.classList.add('today');
+                    }
+
+                    const dayEventsContainer = document.createElement('div');
+                    dayEventsContainer.classList.add('day-events');
+                    
+                    IMPORTANT_ISLAMIC_DATES.forEach(impDate => {
+                        if (currentCellOriginalHijriDate.getMonth() === impDate.month && currentCellOriginalHijriDate.getDate() === impDate.day) {
+                            const eventDiv = document.createElement('div');
+                            eventDiv.classList.add('event-important');
+                            eventDiv.textContent = impDate.name;
+                            dayEventsContainer.appendChild(eventDiv);
+                        }
+                    });
+
+                    const cellOriginalHijriStr = `${currentCellOriginalHijriDate.getFullYear()}-${String(currentCellOriginalHijriDate.getMonth()).padStart(2,'0')}-${String(currentCellOriginalHijriDate.getDate()).padStart(2,'0')}`;
+                    events.filter(event => event.hijriDate === cellOriginalHijriStr).forEach(event => {
+                        const eventDiv = document.createElement('div');
+                        eventDiv.classList.add('event-personal');
+                        if (event.reminderDateTime) eventDiv.classList.add('event-reminder');
+                        eventDiv.textContent = event.title;
+                        dayEventsContainer.appendChild(eventDiv);
+                    });
+                    cell.appendChild(dayEventsContainer);
+                    
+                    cell.addEventListener('click', () => openEventModalForDate(currentCellOriginalHijriDate, currentCellGregorianDate));
+                    calendarGrid.appendChild(cell);
+                }
+                const totalCells = (firstDayOfWeek + daysInMonth);
+                const remainingCells = (totalCells % 7 === 0) ? 0 : 7 - (totalCells % 7);
+                for (let i = 0; i < remainingCells; i++) {
+                    const cell = document.createElement('div');
+                    cell.classList.add('calendar-day-cell', 'other-month');
+                    calendarGrid.appendChild(cell);
+                }
+            }
+
+            function navigateMonth(offset) {
+                currentHijriMonth += offset;
+                if (currentHijriMonth > 12) {
+                    currentHijriMonth = 1;
+                    currentHijriYear++;
+                } else if (currentHijriMonth < 1) {
+                    currentHijriMonth = 12;
+                    currentHijriYear--;
+                }
+                renderCalendar();
+            }
+
+            function navigateYear(offset) {
+                currentHijriYear += offset;
+                renderCalendar();
+            }
+
+            function goToToday() {
+                const today = new Date();
+                const todayAdjustedHijri = getAdjustedHijriDate(today);
+                currentHijriYear = todayAdjustedHijri.getFullYear();
+                currentHijriMonth = todayAdjustedHijri.getMonth();
+                renderCalendar();
+            }
+
+            // --- Event Management ---
+            function openEventModalForDate(originalHijriDate, gregorianDate, eventToEdit = null) {
+                eventModal.style.display = 'block';
+                eventForm.hijriDateDisplay.value = `${originalHijriDate.format("iD iMMMM iYYYY", "ar")} / ${originalHijriDate.format("iD iMMMM iYYYY", "en")}`;
+                eventForm.gregorianDateDisplay.value = gregorianDate.toLocaleDateString('en-CA'); 
+                
+                eventForm.hijriDateISO.value = `${originalHijriDate.getFullYear()}-${String(originalHijriDate.getMonth()).padStart(2,'0')}-${String(originalHijriDate.getDate()).padStart(2,'0')}`;
+
+                if (eventToEdit) {
+                    eventForm.modalTitle.textContent = "Edit Event";
+                    eventForm.id.value = eventToEdit.id;
+                    eventForm.title.value = eventToEdit.title;
+                    eventForm.notes.value = eventToEdit.notes;
+                    eventForm.deleteButton.style.display = 'inline-block';
+                    if (eventToEdit.reminderDateTime) {
+                        eventForm.reminderEnable.checked = true;
+                        eventForm.reminderFields.style.display = 'block';
+                        const reminderDate = new Date(eventToEdit.reminderDateTime);
+                        eventForm.reminderTime.value = `${String(reminderDate.getHours()).padStart(2,'0')}:${String(reminderDate.getMinutes()).padStart(2,'0')}`;
+                    } else {
+                        eventForm.reminderEnable.checked = false;
+                        eventForm.reminderFields.style.display = 'none';
+                        eventForm.reminderTime.value = '';
+                    }
+                } else {
+                    eventForm.modalTitle.textContent = "Log New Event";
+                    eventForm.id.value = '';
+                    eventForm.title.value = '';
+                    eventForm.notes.value = '';
+                    eventForm.deleteButton.style.display = 'none';
+                    eventForm.reminderEnable.checked = false;
+                    eventForm.reminderFields.style.display = 'none';
+                    eventForm.reminderTime.value = '';
+                }
+            }
+
+            async function saveEvent() {
+                const eventId = eventForm.id.value ? parseInt(eventForm.id.value) : null;
+                const originalHijriDateStr = eventForm.hijriDateISO.value;
+                const gregorianDateStr = new Date(eventForm.gregorianDateDisplay.value).toISOString().split('T')[0];
+
+                let reminderDateTime = null;
+                if (eventForm.reminderEnable.checked && eventForm.reminderTime.value) {
+                    const timeParts = eventForm.reminderTime.value.split(':');
+                    const reminderDate = new Date(gregorianDateStr); 
+                    reminderDate.setHours(parseInt(timeParts[0]), parseInt(timeParts[1]), 0, 0);
+                    reminderDateTime = reminderDate.toISOString();
+                }
+
+                const eventData = {
+                    hijriDate: originalHijriDateStr, 
+                    gregorianDate: gregorianDateStr,
+                    title: eventForm.title.value.trim(),
+                    notes: eventForm.notes.value.trim(),
+                    reminderDateTime: reminderDateTime
+                };
+
+                if (!eventData.title) {
+                    alert("Event title is required.");
+                    return;
+                }
+
+                try {
+                    if (eventId) {
+                        eventData.id = eventId;
+                        await updateEventDB(eventData);
+                        alert("Event updated successfully!");
+                    } else {
+                        await addEventDB(eventData);
+                        alert("Event saved successfully!");
+                    }
+                    await loadEvents(); 
+                    renderCalendar();
+                    renderEventList();
+                    closeModal(eventModal);
+                } catch (error) {
+                    console.error("Error saving event:", error);
+                    alert("Failed to save event. See console for details.");
+                }
+            }
+
+            async function deleteEvent() {
+                const eventId = parseInt(eventForm.id.value);
+                if (!eventId || !confirm("Are you sure you want to delete this event?")) {
+                    return;
+                }
+                try {
+                    await deleteEventDB(eventId);
+                    alert("Event deleted successfully!");
+                    await loadEvents();
+                    renderCalendar();
+                    renderEventList();
+                    closeModal(eventModal);
+                } catch (error) {
+                    console.error("Error deleting event:", error);
+                    alert("Failed to delete event. See console for details.");
+                }
+            }
+            
+            function closeModal(modalElement) {
+                modalElement.style.display = 'none';
+            }
+
+            // --- Event List View & Search ---
+            function renderEventList(filteredEvents = null) {
+                eventListContainer.innerHTML = '';
+                const eventsToDisplay = filteredEvents || [...events].sort((a,b) => new Date(a.gregorianDate) - new Date(b.gregorianDate));
+
+                if (eventsToDisplay.length === 0) {
+                    eventListContainer.innerHTML = '<p>No events found.</p>';
+                    return;
+                }
+
+                eventsToDisplay.forEach(event => {
+                    const item = document.createElement('div');
+                    item.classList.add('event-list-item');
+                    
+                    const originalHijri = HijriDate.fromISO(event.hijriDate); 
+                    const gregorian = new Date(event.gregorianDate + "T00:00:00"); // Ensure correct date parsing
+
+                    item.innerHTML = `
+                        <div class="event-list-details">
+                            <strong>${event.title}</strong><br>
+                            <small>
+                                Hijri: ${originalHijri.format("iD iMMMM iYYYY", "en")} (${originalHijri.format("iD iMMMM iYYYY", "ar")})<br>
+                                Gregorian: ${gregorian.toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' })}
+                                ${event.reminderDateTime ? `<br><em>Reminder set for ${new Date(event.reminderDateTime).toLocaleTimeString()}</em>` : ''}
+                            </small>
+                            ${event.notes ? `<p style="font-size:0.9em; margin-top:5px;">${escapeHTML(event.notes.substring(0,100))}${event.notes.length > 100 ? '...' : ''}</p>` : ''}
+                        </div>
+                        <div class="event-list-actions">
+                            <button class="edit-event" data-id="${event.id}">Edit</button>
+                        </div>
+                    `;
+                    eventListContainer.appendChild(item);
+                });
+
+                document.querySelectorAll('.edit-event').forEach(button => {
+                    button.addEventListener('click', (e) => {
+                        const eventId = parseInt(e.target.dataset.id);
+                        const eventToEdit = events.find(ev => ev.id === eventId);
+                        if (eventToEdit) {
+                            const originalHijri = HijriDate.fromISO(eventToEdit.hijriDate);
+                            const gregorian = new Date(eventToEdit.gregorianDate + "T00:00:00");
+                            openEventModalForDate(originalHijri, gregorian, eventToEdit);
+                        }
+                    });
+                });
+            }
+            
+            HijriDate.fromISO = function(isoStr) {
+                const [y, m, d] = isoStr.split('-').map(Number);
+                return new HijriDate(y, m, d);
+            };
+
+            function searchEvents() {
+                const query = searchEventsInput.value.toLowerCase();
+                if (!query) {
+                    renderEventList(); 
+                    return;
+                }
+                const filtered = events.filter(event => 
+                    event.title.toLowerCase().includes(query) || 
+                    (event.notes && event.notes.toLowerCase().includes(query))
+                );
+                renderEventList(filtered);
+            }
+
+            // --- Reminders ---
+            function checkRemindersOnLoad() {
+                const now = new Date();
+                events.forEach(event => {
+                    if (event.reminderDateTime) {
+                        const reminderTime = new Date(event.reminderDateTime);
+                        if (reminderTime > now) { 
+                            const timeToReminder = reminderTime.getTime() - now.getTime();
+                            if (timeToReminder < 24 * 60 * 60 * 1000 * 7) { // Only set timeouts for near future
+                                setTimeout(() => {
+                                    showNotification(`Reminder: ${event.title}`, `Event at ${reminderTime.toLocaleTimeString()}`);
+                                }, timeToReminder);
+                            }
+                        }
+                    }
+                });
+            }
+
+            function showNotification(title, body) {
+                if (!("Notification" in window)) {
+                    console.log("This browser does not support desktop notification");
+                    return;
+                }
+                if (Notification.permission === "granted") {
+                    new Notification(title, { body: body });
+                } else if (Notification.permission !== "denied") {
+                    Notification.requestPermission().then(permission => {
+                        if (permission === "granted") {
+                            new Notification(title, { body: body });
+                        }
+                    });
+                }
+            }
+
+            // --- Moon Phases ---
+            function getMoonPhaseSymbol(date) {
+                const year = date.getFullYear();
+                let month = date.getMonth() + 1; 
+                const day = date.getDate();
+                let c = 0, e = 0, jd = 0, b = 0;
+                if (month < 3) { year--; month += 12; }
+                month++;
+                c = 365.25 * year;
+                e = 30.6 * month;
+                jd = c + e + day - 694039.09; 
+                jd /= 29.5305882; 
+                b = parseInt(jd); 
+                jd -= b; 
+                b = Math.round(jd * 8); 
+                if (b >= 8) b = 0; 
+                const phases = ['🌑', '🌒', '🌓', '🌔', '🌕', '🌖', '🌗', '🌘'];
+                return phases[b];
+            }
+
+            // --- UI/UX (Theming, Tabs) ---
+            function applyTheme(themeName) {
+                document.body.dataset.theme = themeName;
+                currentTheme = themeName;
+                saveSetting('theme', themeName);
+            }
+
+            function setupTabs() {
+                const tabButtons = document.querySelectorAll('.tab-button');
+                const tabContents = document.querySelectorAll('.tab-content');
+
+                tabButtons.forEach(button => {
+                    button.addEventListener('click', () => {
+                        tabButtons.forEach(btn => btn.classList.remove('active'));
+                        button.classList.add('active');
+
+                        const targetTab = button.dataset.tab;
+                        tabContents.forEach(content => {
+                            content.classList.toggle('active', content.id === targetTab);
+                        });
+                        if (targetTab === 'list-view') renderEventList(); 
+                    });
+                });
+            }
+            
+            // --- Backup and Restore ---
+            async function backupData() {
+                try {
+                    const allEvents = await getAllEventsDB();
+                    const settingsToBackup = {
+                        hijriAdjustment: await getSetting('hijriAdjustment') || 0,
+                        theme: await getSetting('theme') || 'default'
+                    };
+                    
+                    const dataToBackup = {
+                        appName: "MyHijriCalendar_YasinUllah",
+                        backupVersion: "1.0",
+                        timestamp: new Date().toISOString(),
+                        settings: settingsToBackup,
+                        events: allEvents
+                    };
+
+                    const jsonData = JSON.stringify(dataToBackup, null, 2);
+                    const blob = new Blob([jsonData], { type: 'application/json' });
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    const dateStr = new Date().toISOString().split('T')[0].replace(/-/g, '');
+                    a.download = `MyHijriCalendarBackup_${dateStr}.json`;
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    URL.revokeObjectURL(url);
+                    alert("Backup successful! Check your downloads folder.");
+                } catch (error) {
+                    console.error("Backup failed:", error);
+                    alert("Backup failed. See console for details.");
+                }
+            }
+
+            async function restoreData(fileEvent) {
+                const file = fileEvent.target.files[0];
+                if (!file) return;
+
+                if (!confirm("Restoring data will overwrite ALL current events and settings. This cannot be undone. Are you sure you want to proceed?")) {
+                    fileEvent.target.value = null; 
+                    return;
+                }
+
+                const reader = new FileReader();
+                reader.onload = async (e) => {
+                    try {
+                        const importedData = JSON.parse(e.target.result);
+                        if (importedData.appName !== "MyHijriCalendar_YasinUllah" || !importedData.events || !importedData.settings) {
+                            alert("Invalid backup file format or missing critical data.");
+                            return;
+                        }
+
+                        const transaction = db.transaction([EVENTS_STORE_NAME, SETTINGS_STORE_NAME], "readwrite");
+                        const eventStore = transaction.objectStore(EVENTS_STORE_NAME);
+                        const settingsStore = transaction.objectStore(SETTINGS_STORE_NAME);
+
+                        const promisifyRequest = (request) => new Promise((resolve, reject) => {
+                            request.onsuccess = resolve;
+                            request.onerror = () => reject(request.error);
+                        });
+
+                        await promisifyRequest(eventStore.clear());
+                        
+                        for (const ev of importedData.events) {
+                            delete ev.id; 
+                            await promisifyRequest(eventStore.add(ev));
+                        }
+
+                        await promisifyRequest(settingsStore.put({ key: 'hijriAdjustment', value: importedData.settings.hijriAdjustment || 0 }));
+                        await promisifyRequest(settingsStore.put({ key: 'theme', value: importedData.settings.theme || 'default' }));
+                        
+                        await new Promise((resolve, reject) => {
+                            transaction.oncomplete = resolve;
+                            transaction.onerror = () => reject(transaction.error);
+                        });
+                        
+                        alert("Data restored successfully! The app will now reload to apply changes.");
+                        location.reload();
+
+                    } catch (error) {
+                        console.error("Restore failed:", error);
+                        alert(`Restore failed: ${error.message}. The file might be corrupted or not a valid backup. See console for details.`);
+                    } finally {
+                        fileEvent.target.value = null; 
+                    }
+                };
+                reader.onerror = () => {
+                    alert("Failed to read the backup file.");
+                    fileEvent.target.value = null;
+                };
+                reader.readAsText(file);
+            }
+
+            function escapeHTML(str) {
+                if (str === null || str === undefined) return '';
+                return String(str).replace(/[&<>"']/g, function (match) {
+                    return {
+                        '&': '&',
+                        '<': '<',
+                        '>': '>',
+                        '"': '"',
+                        "'": '''
+                    }[match];
+                });
+            }
+
+            // --- Event Listeners Setup ---
+            function setupEventListeners() {
+                document.getElementById('prev-month-button').addEventListener('click', () => navigateMonth(-1));
+                document.getElementById('next-month-button').addEventListener('click', () => navigateMonth(1));
+                document.getElementById('prev-year-button').addEventListener('click', () => navigateYear(-1));
+                document.getElementById('next-year-button').addEventListener('click', () => navigateYear(1));
+                document.getElementById('today-button').addEventListener('click', goToToday);
+
+                closeEventModalButton.addEventListener('click', () => closeModal(eventModal));
+                eventForm.saveButton.addEventListener('click', saveEvent);
+                eventForm.deleteButton.addEventListener('click', deleteEvent);
+                
+                eventForm.reminderEnable.addEventListener('change', (e) => {
+                    eventForm.reminderFields.style.display = e.target.checked ? 'block' : 'none';
+                });
+
+                document.getElementById('show-settings-button').addEventListener('click', () => {
+                    settingsModal.style.display = 'block';
+                    hijriAdjustmentInput.value = hijriAdjustment; 
+                });
+                document.getElementById('close-settings-modal').addEventListener('click', () => closeModal(settingsModal));
+                document.getElementById('save-settings-button').addEventListener('click', async () => {
+                    const newAdjustment = parseInt(hijriAdjustmentInput.value, 10);
+                    if (isNaN(newAdjustment) || newAdjustment < -2 || newAdjustment > 2) {
+                        alert("Invalid adjustment value. Must be between -2 and 2.");
+                        return;
+                    }
+                    hijriAdjustment = newAdjustment;
+                    try {
+                        await saveSetting('hijriAdjustment', hijriAdjustment);
+                        closeModal(settingsModal);
+                        goToToday(); 
+                        alert("Settings saved. Calendar updated.");
+                    } catch (error) {
+                        console.error("Error saving settings:", error);
+                        alert("Failed to save settings.");
+                    }
+                });
+
+                themeSwitcher.addEventListener('change', (e) => applyTheme(e.target.value));
+                searchEventsInput.addEventListener('input', searchEvents);
+
+                document.getElementById('backup-data-button').addEventListener('click', backupData);
+                document.getElementById('importFile').addEventListener('change', restoreData);
+
+                window.addEventListener('click', (event) => {
+                    if (event.target === eventModal) closeModal(eventModal);
+                    if (event.target === settingsModal) closeModal(settingsModal);
+                });
+                
+                setupTabs();
+            }
+
+            initializeApp().catch(err => {
+                console.error("Failed to initialize app:", err);
+                document.body.innerHTML = `<div style="padding: 20px; text-align: center; color: red; font-size: 1.2em;">
+                    <h1>Application Error</h1>
+                    <p>A critical error occurred during app initialization: ${escapeHTML(err.message)}</p>
+                    <p>Please try refreshing the page. If the problem persists, your data might be corrupted or the browser environment is not supported.</p>
+                    <p>Details: ${escapeHTML(err.stack || '')}</p>
+                </div>`;
+            });
+        });
+    </script>
+</body>
+</html>
